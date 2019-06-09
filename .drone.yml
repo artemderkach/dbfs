@@ -1,0 +1,14 @@
+kind: pipeline
+name: default
+
+workspace:
+  base: /go
+  src: src/github.com/mind-rot/dbfs
+
+steps:
+  - name: build
+    image: golang:1.12.5-alpine3.9
+    commands:
+      - pwd
+      - ls
+      - go build .
