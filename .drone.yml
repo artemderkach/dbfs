@@ -17,8 +17,6 @@ steps:
   image: appleboy/drone-ssh
   host: http://68.183.210.229
   username: root
-  volumes:
-    - /root/drone_rsa:/root/ssh/drone_rsa
-  key_path: /root/ssh/drone_rsa
+  secrets: [ ssh_key ]
   script:
-    - echo "test ssh"
+  - echo "test ssh"
