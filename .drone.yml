@@ -6,13 +6,6 @@ workspace:
   src: src/github.com/mind-rot/dbfs
 
 steps:
-- name: build
-  image: golang:1.12.5-alpine3.9
-  commands:
-  - pwd
-  - ls
-  - go build .
-
 - name: deploy
   image: appleboy/drone-ssh
   host:
@@ -21,3 +14,11 @@ steps:
   secrets: [ ssh_key ]
   script:
   - echo "test ssh"
+
+- name: build
+  image: golang:1.12.5-alpine3.9
+  commands:
+  - pwd
+  - ls
+  - go build .
+
