@@ -18,7 +18,9 @@ steps:
   settings:
     host:
     - 68.183.210.229
+    environment:
+      SSH_KEY: ssh_key
     username: root
-    secrets: [ ssh_key ]
+    # secrets: [ ssh_key ]
     script:
     - echo "test ssh"
