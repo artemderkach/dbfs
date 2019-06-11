@@ -19,7 +19,8 @@ steps:
     host:
     - 68.183.210.229
     environment:
-      SSH_KEY: ssh_key
+      SSH_KEY:
+        from_secret: ssh_key
     username: root
     # secrets: [ ssh_key ]
     script:
