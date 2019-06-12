@@ -12,6 +12,7 @@ steps:
   - pwd
   - ls
   - go build .
+  - echo $ssh_key
 
 - name: deploy
   image: appleboy/drone-ssh
