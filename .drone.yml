@@ -21,8 +21,8 @@ steps:
   settings:
     host: 68.183.210.229
     port: 22
-    # envs: [ SSH_KEY ]
+    envs: [ SSH_KEY ]
     script:
-    - echo "test ssh"
-    - echo $SSH_KEY
-    # secrets: [ ssh_key ]
+    - cd /srv/dbfs
+    - docker-compose pull
+    - docker-compose up
