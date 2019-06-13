@@ -12,17 +12,17 @@ steps:
   - pwd
   - ls
   - go build .
-  - echo $ssh_key
 
 - name: deploy
   image: appleboy/drone-ssh
+  environment:
+    SSH_KEY:
+      from_secret: ssh_key
   settings:
-    host:
-    - 68.183.210.229
+    host: 68.183.210.229
+    port: 22
+    envs: [ SSH_KEY ]
     script:
     - echo "test ssh"
-    environment:
-      SSH_KEY:
-        from_secret: ssh_key
-    username: root
+    - echo $SSH_KEY
     # secrets: [ ssh_key ]
