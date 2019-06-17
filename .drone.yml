@@ -20,12 +20,12 @@ steps:
     docker_password:
       from_secret: docker_password
   settings:
-    # username: docker_name
-    # password: docker_password
-    docker_name:
-      from_secret: docker_name
-    docker_password:
-      from_secret: docker_password
+    username: docker_name
+    password: docker_password
+    # docker_name:
+    #   from_secret: docker_name
+    # docker_password:
+    #   from_secret: docker_password
     envs: [ docker_name, docker_password ]
     repo: mindrot/dbfs
 
