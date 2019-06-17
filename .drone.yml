@@ -22,11 +22,11 @@ steps:
   settings:
     # username: docker_name
     # password: docker_password
-    docker_name:
+    username:
       from_secret: docker_name
-    docker_password:
+    password:
       from_secret: docker_password
-    envs: [ docker_name, docker_password ]
+    # envs: [ docker_name, docker_password ]
     repo: mindrot/dbfs
 
 - name: deploy
