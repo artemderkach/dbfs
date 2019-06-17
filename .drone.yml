@@ -20,6 +20,10 @@ steps:
     docker_password:
       from_secret: docker_password
   settings:
+    script:
+      - echo $docker_name
+      - echo $(docker_name)
+      - echo $$docker_name
     username: docker_name
     password: docker_password
     # docker_name:
