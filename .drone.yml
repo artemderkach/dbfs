@@ -8,11 +8,6 @@ workspace:
 steps:
 - name: build
   image: golang:1.12.5
-  # environment:
-  #   docker_name:
-  #     from_secret: docker_name
-  #   docker_password:
-  #     from_secret: docker_password
   commands:
   - go build
   - go test
@@ -20,24 +15,23 @@ steps:
 - name: docker
   image: plugins/docker
   settings:
-    # username: docker_name
-    # password: docker_password
     username:
       from_secret: docker_name
     password:
       from_secret: docker_password
-    # envs: [ docker_name, docker_password ]
     repo: mindrot/dbfs
 
 - name: deploy
   image: appleboy/drone-ssh
-  environment:
-    SSH_KEY:
-      from_secret: ssh_key
+  # environment:
+  #   SSH_KEY:
+  #     from_secret: ssh_key
   settings:
     host: 68.183.210.229
     port: 22
-    envs: [ SSH_KEY ]
+    ssh_key:
+      from_secret: ssh_key
+    # envs: [ SSH_KEY ]
     script:
     - pwd
     - ls
