@@ -47,6 +47,7 @@ steps:
     script:
     - pwd
     - ls
+    - ls /
     - cd /srv/dbfs
     - docker-compose pull
     - docker-compose up
