@@ -8,11 +8,11 @@ workspace:
 steps:
 - name: build
   image: golang:1.12.5
-  environment:
-    docker_name:
-      from_secret: docker_name
-    docker_password:
-      from_secret: docker_password
+  # environment:
+  #   docker_name:
+  #     from_secret: docker_name
+  #   docker_password:
+  #     from_secret: docker_password
   commands:
   - go build
   - go test
