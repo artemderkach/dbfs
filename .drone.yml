@@ -9,9 +9,20 @@ steps:
 - name: build
   image: golang:1.12.5-alpine3.9
   commands:
-  - pwd
-  - ls
-  - go build .
+  - go build
+  - go test
+
+- name: docker
+  image: plugins/docker
+  environment:
+    docker_name:
+      from_secret: docker_name
+    docker_password:
+      from_secret: docker_password
+  settings:
+    username: docker_name
+    password: docker_password
+    repo: mindrot/dbfs
 
 - name: deploy
   image: appleboy/drone-ssh
@@ -23,6 +34,7 @@ steps:
     port: 22
     envs: [ SSH_KEY ]
     script:
+    - pwd
     - cd /srv/dbfs
     - docker-compose pull
     - docker-compose up
