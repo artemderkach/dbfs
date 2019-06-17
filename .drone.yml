@@ -20,6 +20,7 @@ steps:
     docker_password:
       from_secret: docker_password
   settings:
+    envs: [ docker_name, docker_password ]
     username: docker_name
     password: docker_password
     repo: mindrot/dbfs
