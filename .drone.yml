@@ -9,6 +9,8 @@ steps:
 - name: build
   image: golang:1.12.5
   commands:
+  - ls
+  - pwd
   - go build
   - go test
 
@@ -20,6 +22,16 @@ steps:
     password:
       from_secret: docker_password
     repo: mindrot/dbfs
+
+# - name: deliver_orch
+#   image: appleboy/drone-scp
+#   settings:
+#     host: 68.183.210.229
+#     port: 22
+#     ssh_key:
+#       from_secret: ssh_key
+#     target: /src
+#     source: ./docker-compose.yml
 
 - name: deploy
   image: appleboy/drone-ssh
