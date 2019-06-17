@@ -7,7 +7,7 @@ workspace:
 
 steps:
 - name: build
-  image: golang:1.12.5-alpine3.9
+  image: golang:1.12.5
   commands:
   - go build
   - go test
@@ -35,6 +35,7 @@ steps:
     envs: [ SSH_KEY ]
     script:
     - pwd
+    - ls
     - cd /srv/dbfs
     - docker-compose pull
     - docker-compose up
