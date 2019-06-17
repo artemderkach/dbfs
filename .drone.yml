@@ -49,6 +49,7 @@ steps:
     - pwd
     - ls
     - ls /
+    - ls /home
     - cd /srv/dbfs
     - docker-compose pull
     - docker-compose up
