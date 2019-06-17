@@ -32,8 +32,6 @@ steps:
 #       from_secret: ssh_key
 #     target: /src
 #     source: ./docker-compose.yml
-- name: clone
-  image: drone/git
 - name: deploy
   image: appleboy/drone-ssh
   # environment:
