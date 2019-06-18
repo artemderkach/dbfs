@@ -3,7 +3,7 @@ name: default
 
 workspace:
   base: /var
-  # src: src/github.com/mind-rot/dbfs
+  src: src/github.com/mind-rot/dbfs
 
 steps:
 # - name: build
