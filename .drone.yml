@@ -2,17 +2,17 @@ kind: pipeline
 name: default
 
 workspace:
-  base: /go
-  src: src/github.com/mind-rot/dbfs
+  base: /var
+  # src: src/github.com/mind-rot/dbfs
 
 steps:
-- name: build
-  image: golang:1.12.5
-  commands:
-  - ls
-  - pwd
-  - go build
-  - go test
+# - name: build
+#   image: golang:1.12.5
+#   commands:
+#   - ls
+#   - pwd
+#   - go build
+#   - go test
 
 - name: docker
   image: plugins/docker
@@ -48,6 +48,7 @@ steps:
     - ls
     - ls /
     - ls /home
+    - ls /var
     - cd /srv/dbfs
     - docker-compose pull
     - docker-compose up
