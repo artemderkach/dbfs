@@ -6,13 +6,13 @@ workspace:
   src: src/github.com/mind-rot/dbfs
 
 steps:
-# - name: build
-#   image: golang:1.12.5
-#   commands:
-#   - ls
-#   - pwd
-#   - go build
-#   - go test
+- name: build
+  image: golang:1.12.5
+  commands:
+  - ls
+  - pwd
+  - go build
+  - go test
 
 - name: docker
   image: plugins/docker
@@ -22,38 +22,13 @@ steps:
     password:
       from_secret: docker_password
     repo: mindrot/dbfs
-
-- name: deliver_orch
-  image: appleboy/drone-scp
+    
+- name: deploy
+  image: appleboy/drone-ssh
   settings:
     host: 68.183.210.229
     port: 22
     ssh_key:
       from_secret: ssh_key
-    target: /src
-    source: ./docker-compose.yml
     script:
-      - pwd
-      - ls
-      - ls /
-
-# - name: deploy
-#   image: appleboy/drone-ssh
-#   # environment:
-#   #   SSH_KEY:
-#   #     from_secret: ssh_key
-#   settings:
-#     host: 68.183.210.229
-#     port: 22
-#     ssh_key:
-#       from_secret: ssh_key
-#     # envs: [ SSH_KEY ]
-#     script:
-#     - pwd
-#     - ls
-#     - ls /
-#     - ls /home
-#     - ls /var
-#     - cd /srv/dbfs
-#     - docker-compose pull
-#     - docker-compose up
+    - docker-compose up
