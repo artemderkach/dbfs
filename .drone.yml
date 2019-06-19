@@ -9,8 +9,6 @@ steps:
 - name: build
   image: golang:1.12.5
   commands:
-  - ls
-  - pwd
   - go build
   - go test
 
@@ -31,4 +29,5 @@ steps:
     ssh_key:
       from_secret: ssh_key
     script:
+    - cd /srv/dbfs
     - docker-compose up
