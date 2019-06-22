@@ -9,7 +9,7 @@ steps:
 - name: build
   image: golang:1.12.5
   commands:
-  - go build
+  - GO111MODULE=on go build -mod vendor ./...
   - go test
 
 - name: docker
