@@ -2,7 +2,8 @@ version: '3'
 
 services:
   dbfs:
-    image: mindrot/dbfs
+    build: .
+    image: dbfs
     container_name: dbfs
     ports:
       - "8080:8080"
