@@ -3,15 +3,12 @@ name: default
 
 workspace:
   base: /go
-  src: src/github.com/mind-rot/dbfs
+  path: src/github.com/mind-rot/dbfs
 
 steps:
 - name: build
   image: golang:1.12.6-alpine3.9
   commands:
-  - rm go.mod
-  - pwd
-  - ls
   - GO111MODULE=on go build -mod vendor ./...
   - go test
 
