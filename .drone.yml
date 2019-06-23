@@ -7,7 +7,7 @@ workspace:
 
 steps:
 - name: build
-  image: golang:1.12.5
+  image: golang:1.12.6-alpine3.9
   commands:
   - GO111MODULE=on go build -mod vendor ./...
   - go test
