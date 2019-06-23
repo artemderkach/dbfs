@@ -9,7 +9,7 @@ steps:
 - name: build
   image: golang:1.12.6-alpine3.9
   commands:
-  - GO111MODULE=on go build -mod vendor ./...
+  - GO111MODULE=on CGO_ENABLED=0 go build -mod vendor ./...
   - go test
 
 - name: docker
