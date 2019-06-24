@@ -9,8 +9,8 @@ import (
 
 func main() {
 	fmt.Println("running dbfs on :8080")
-	http.HandleFunc("/db", db)
 	http.HandleFunc("/", home)
+	http.HandleFunc("/db", db)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		panic(err)
