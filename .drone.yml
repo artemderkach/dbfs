@@ -29,4 +29,5 @@ steps:
       from_secret: ssh_key
     script:
     - cd /srv/dbfs
-    - docker-compose up --build -d
+    - docker-compose pull
+    - docker-compose up -d
