@@ -4,8 +4,7 @@ WORKDIR /srv/dbfs
 
 COPY . .
 
-RUN go build -mod vendor ./...
-RUN go test
+RUN GO111MODULE=on go build -mod vendor ./...
 
 FROM alpine:3.9
 

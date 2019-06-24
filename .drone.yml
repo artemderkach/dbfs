@@ -6,11 +6,10 @@ workspace:
   path: src/github.com/mind-rot/dbfs
 
 steps:
-- name: build
+- name: test
   image: golang:1.12.6
   commands:
-  - GO111MODULE=on go build -mod vendor ./...
-  - go test
+  - GO111MODULE=on go test
 
 - name: docker
   image: plugins/docker
