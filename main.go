@@ -10,12 +10,20 @@ import (
 func main() {
 	fmt.Println("running dbfs on :8080")
 	http.HandleFunc("/", home)
-	http.HandleFunc("/db", initDB)
+	http.HandleFunc("/initdb", initDB)
+	http.HandleFunc("/db", dbHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		panic(err)
+    	panic(err)
 	}
+}
+
+func router() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", home)
+
+	return mux
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -48,10 +56,20 @@ func dbHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	result := ""
+	err = db.View(func(tx *bolt.Tx) error {
+		fmt.Println("___OMG___")
+		c := tx.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			result += fmt.Sprintf("key=%s, value=%s\n", k, v)
+			fmt.Printf("key=%s, value=%s\n", k, v)
+		}
+		return nil
+	})
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	w.Write([]byte("Hello from boltdb"))
+	w.Write([]byte(result))
 }
