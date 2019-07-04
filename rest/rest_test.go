@@ -47,19 +47,20 @@ func TestPut(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-// func TestView(t *testing.T) {
-// 	URL := "/view"
-// 	r := Rest{}
-// 	ts := httptest.NewServer(r.Router())
-// 	defer ts.Close()
+func TestView(t *testing.T) {
+	URL := "/view"
+	r := Rest{}
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
 
-// 	resp, err := http.Get(ts.URL + URL)
-// 	require.Nil(t, err)
+	resp, err := http.Get(ts.URL + URL)
+	require.Nil(t, err)
 
-// 	msg, err := ioutil.ReadAll(resp.Body)
-// 	require.Nil(t, err)
-// 	assert.Equal(t, "db data", string(msg))
-// }
+	msg, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	assert.Equal(t, "db data", string(msg))
+}
+
 func getRest() (*Rest, error) {
 	s, err := getStore()
 	if err != nil {

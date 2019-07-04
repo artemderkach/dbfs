@@ -23,7 +23,7 @@ func (rest *Rest) Router() *mux.Router {
 }
 
 func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
-	b, err :=rest.Store.View()
+	b, err :=rest.Store.View("file")
 	if err != nil {
 		err = errors.Wrap(err, "error retrieving view data from database")
 		fmt.Println(err)
