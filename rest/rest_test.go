@@ -30,9 +30,10 @@ func TestHome(t *testing.T) {
 
 func TestPut(t *testing.T) {
 	URL := "/put"
-	r := Rest{
-		Store: testStore(),
-	}
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
@@ -59,13 +60,28 @@ func TestPut(t *testing.T) {
 // 	require.Nil(t, err)
 // 	assert.Equal(t, "db data", string(msg))
 // }
+func getRest() (*Rest, error) {
+	s, err := getStore()
+	if err != nil {
+		return nil, err
+	}
+	r := &Rest{
+		Store: s,
+	}
+	return r, nil
+}
 
-func testStore() *store.Store {
+func getStore() (*store.Store, error) {
 	s := &store.Store{
-		Path: "/tmp/db123",
+		Path:       "/tmp/db123",
+		Collection: "files",
+	}
+	err := s.Init()
+	if err != nil {
+		return nil, err
 	}
 
-	return s
+	return s, err
 }
 
 func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, error) {
