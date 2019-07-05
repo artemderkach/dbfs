@@ -22,8 +22,9 @@ func (rest *Rest) Router() *mux.Router {
 	return router
 }
 
+// view return the current state of database
 func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
-	b, err :=rest.Store.View()
+	b, err := rest.Store.View()
 	if err != nil {
 		err = errors.Wrap(err, "error retrieving view data from database")
 		fmt.Println(err)
@@ -33,6 +34,8 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+// put creates new record in database. Returns state of database after write
+// Take "multipart/form-data" request with "file" key
 func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -47,10 +50,10 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 		err = errors.Wrap(err, "error writing file to storage")
 		fmt.Println(err)
 		w.Write([]byte(err.Error()))
-	return
+		return
 	}
 
-	b, err :=rest.Store.View()
+	b, err := rest.Store.View()
 	if err != nil {
 		err = errors.Wrap(err, "error retrieving view data from database")
 		fmt.Println(err)
