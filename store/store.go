@@ -14,44 +14,33 @@ type Store struct {
 	Collection string
 }
 
-func (store *Store) Init() error {
-	db, err := bolt.Open(store.Path, 0600, nil)
-	if err != nil {
-		return errors.Wrap(err, "error opening database")
-	}
-	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucket([]byte(store.Collection))
-		if err != nil {
-			return errors.Wrap(err, "error creating bucket")
-		}
-
-		return nil
-	})
-
-	return err
-}
-
 func (store *Store) Drop() error {
 	err := os.Remove(store.Path)
 	if err != nil {
-		return errors.Wrap(err, "error droping database")
+		return errors.Wrap(err, "error dropping database")
 	}
 	return nil
 }
 
-func (store *Store) View(filename string) (result []byte, err error) {
+func (store *Store) View() (result []byte, err error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return []byte(""), errors.Wrap(err, "error opening database")
 	}
+	defer db.Close()
 
-	err = db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(store.Collection))
-		b.Get([]byte(filename))
+	err = db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		if err != nil {
+			return errors.Wrap(err, "error opening bucket")
+		}
+
 		c := b.Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 			result = append(result, k...)
+			result = append(result, []byte("\n")...)
 		}
+
 		return nil
 	})
 
@@ -63,9 +52,14 @@ func (store *Store) Put(filename string, file io.Reader) error {
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
 	}
+	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(store.Collection))
+		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		if err != nil {
+			return errors.Wrap(err, "error opening bucket")
+		}
+
 		f, err := ioutil.ReadAll(file)
 		if err != nil {
 			return errors.Wrap(err, "error reading file from reader")

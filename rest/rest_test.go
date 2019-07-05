@@ -28,6 +28,23 @@ func TestHome(t *testing.T) {
 	assert.Equal(t, "Hello from DBFS", string(msg))
 }
 
+func TestView(t *testing.T) {
+	URL := "/view"
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + URL)
+	require.Nil(t, err)
+
+	msg, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	assert.Equal(t, "Neo\nanswer\n", string(msg))
+}
+
 func TestPut(t *testing.T) {
 	URL := "/put"
 	r, err := getRest()
@@ -37,28 +54,15 @@ func TestPut(t *testing.T) {
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
-	file := strings.NewReader("Ok, that was epic!")
-	body, err := multipartFile("file", "filename.txt", file)
+	file := strings.NewReader("Ok, that was epic!\n")
+	body, header, err := multipartFile("file", "filename.txt", file)
 	require.Nil(t, err)
 
-	resp, err := http.Post(ts.URL+URL, "multipart/form-data", body)
+	_, err = http.Post(ts.URL+URL, header, body)
 	require.Nil(t, err)
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestView(t *testing.T) {
-	URL := "/view"
-	r := Rest{}
-	ts := httptest.NewServer(r.Router())
-	defer ts.Close()
-
-	resp, err := http.Get(ts.URL + URL)
-	require.Nil(t, err)
-
-	msg, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "db data", string(msg))
+	view, err := r.Store.View()
+	assert.Equal(t, "Neo\nanswer\nfilename.txt\n", string(view))
 }
 
 func getRest() (*Rest, error) {
@@ -77,22 +81,35 @@ func getStore() (*store.Store, error) {
 		Path:       "/tmp/db123",
 		Collection: "files",
 	}
-	err := s.Init()
+
+	r := strings.NewReader("42")
+	err := s.Put("answer", r)
 	if err != nil {
 		return nil, err
 	}
 
-	return s, err
+	r = strings.NewReader("The One")
+	err = s.Put("Neo", r)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
-func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, error) {
+func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, string, error) {
 	body := &bytes.Buffer{}
 
 	writer := multipart.NewWriter(body)
-	_, err := writer.CreateFormFile(keyName, fileName)
+	part, err := writer.CreateFormFile(keyName, fileName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, "", err
+	}
+	writer.Close()
 
-	return body, nil
+	return body, writer.FormDataContentType(), nil
 }
