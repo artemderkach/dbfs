@@ -82,6 +82,27 @@ func TestGet(t *testing.T) {
 	assert.Equal(t, "42", string(msg))
 }
 
+func TestDelete(t *testing.T) {
+	URL := "/delete/answer"
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+URL, nil)
+	resp, err := client.Do(req)
+
+	require.Nil(t, err)
+
+	msg, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	assert.Equal(t, "Neo\n", string(msg))
+}
+
 func getRest() (*Rest, error) {
 	s, err := getStore()
 	if err != nil {

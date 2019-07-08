@@ -19,8 +19,33 @@ func (rest *Rest) Router() *mux.Router {
 	router.HandleFunc("/view", rest.view).Methods("GET")
 	router.HandleFunc("/put", rest.put).Methods("POST")
 	router.HandleFunc("/download/{filename}", rest.download).Methods("GET")
+	router.HandleFunc("/delete/{filename}", rest.delete).Methods("DELETE")
 
 	return router
+}
+// delete removes value from database
+// returnes current state of database (/view route)
+func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	filename := vars["filename"]
+
+	err := rest.Store.Delete(filename)
+	if err != nil {
+		err = errors.Wrap(err, "error deleting file from database")
+		fmt.Println(err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	b, err := rest.Store.View()
+	if err != nil {
+		err = errors.Wrap(err, "error retrieving view data from database")
+		fmt.Println(err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(b)
 }
 
 // dowload returns the value for filename

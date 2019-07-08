@@ -97,3 +97,24 @@ func (store *Store) Get(filename string) (result []byte, err error) {
 
 	return result, err
 }
+
+func (store *Store) Delete(filename string) (err error) {
+	db, err := bolt.Open(store.Path, 0600, nil)
+	if err != nil {
+		return errors.Wrap(err, "error opening database")
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		if err != nil {
+			return errors.Wrap(err, "error opening bucket")
+		}
+
+		err = b.Delete([]byte(filename))
+
+		return nil
+	})
+
+	return err
+}

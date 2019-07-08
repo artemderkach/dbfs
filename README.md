@@ -13,3 +13,4 @@ just for the memes
 - `POST /put` create record with file in database  
    expect "multipart/form-data" format.
 - `GET /download/{filename}` return content of "filename" 
+- `DELETE /delete/{filename}` returns `GET /view` after deletion
