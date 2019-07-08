@@ -18,19 +18,9 @@ func TestMain(t *testing.T) {
 		require.Nil(t, e)
 	}()
 
-	// wg := sync.WaitGroup{}
-	// wg.Add(1)
-	// go func() {
-	// 	st := time.Now()
-	// 	main()
-	// 	assert.True(t, time.Since(st).Seconds() >= 5, "should take about 5s")
-	// 	time.Sleep(1000 * time.Millisecond)
-	// 	wg.Done()
-	// }()
 	go func() {
 		main()
 	}()
-
 
 	time.Sleep(1000 * time.Millisecond)
 
