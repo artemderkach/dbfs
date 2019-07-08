@@ -65,6 +65,23 @@ func TestPut(t *testing.T) {
 	assert.Equal(t, "Neo\nanswer\nfilename.txt\n", string(view))
 }
 
+func TestGet(t *testing.T) {
+	URL := "/download/answer"
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + URL)
+	require.Nil(t, err)
+
+	msg, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	assert.Equal(t, "42", string(msg))
+}
+
 func getRest() (*Rest, error) {
 	s, err := getStore()
 	if err != nil {

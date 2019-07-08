@@ -15,11 +15,28 @@ type Rest struct {
 
 func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/", rest.home)
-	router.HandleFunc("/view", rest.view)
-	router.HandleFunc("/put", rest.put)
+	router.HandleFunc("/", rest.home).Methods("GET")
+	router.HandleFunc("/view", rest.view).Methods("GET")
+	router.HandleFunc("/put", rest.put).Methods("POST")
+	router.HandleFunc("/download/{filename}", rest.download).Methods("GET")
 
 	return router
+}
+
+// dowload returns the value for filename
+func (rest *Rest) download(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	filename := vars["filename"]
+
+	b, err := rest.Store.Get(filename)
+	if err != nil {
+		err = errors.Wrap(err, "error retrieving file data from database")
+		fmt.Println(err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(b)
 }
 
 // view return the current state of database

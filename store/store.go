@@ -74,3 +74,26 @@ func (store *Store) Put(filename string, file io.Reader) error {
 
 	return nil
 }
+
+func (store *Store) Get(filename string) (result []byte, err error) {
+	db, err := bolt.Open(store.Path, 0600, nil)
+	if err != nil {
+		return []byte(""), errors.Wrap(err, "error opening database")
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		if err != nil {
+			return errors.Wrap(err, "error opening bucket")
+		}
+
+		v := b.Get([]byte(filename))
+		result = make([]byte, len(v))
+		copy(result, v)
+
+		return nil
+	})
+
+	return result, err
+}
