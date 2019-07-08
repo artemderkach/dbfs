@@ -13,3 +13,4 @@ just for the memes
 - `GET /view` return the current state of database
 - `POST /put` create record with file in database  
    expect "multipart/form-data" format.
+- `GET /download/{filename}` return content of "filename" 
