@@ -1,13 +1,12 @@
 # dbfs
 file system in database
 
+## purpose
+just for the memes
+
 ## starting service
 - `docker-compose up --build` to start on `:8080` port  
 - `go build && ./dbfs` to start on `:8080` port 
-
-
-## purpose
-just for the memes
 
 ## api
 - `GET /view` return the current state of database
