@@ -22,7 +22,7 @@ func (store *Store) Drop() error {
 	return nil
 }
 
-func (store *Store) View() (result []byte, err error) {
+func (store *Store) View(collection string) (result []byte, err error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return []byte(""), errors.Wrap(err, "error opening database")
@@ -30,7 +30,7 @@ func (store *Store) View() (result []byte, err error) {
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}
@@ -47,7 +47,7 @@ func (store *Store) View() (result []byte, err error) {
 	return result, err
 }
 
-func (store *Store) Put(filename string, file io.Reader) error {
+func (store *Store) Put(collection, filename string, file io.Reader) error {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
@@ -55,7 +55,7 @@ func (store *Store) Put(filename string, file io.Reader) error {
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}
@@ -75,7 +75,7 @@ func (store *Store) Put(filename string, file io.Reader) error {
 	return nil
 }
 
-func (store *Store) Get(filename string) (result []byte, err error) {
+func (store *Store) Get(collection, filename string) (result []byte, err error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return []byte(""), errors.Wrap(err, "error opening database")
@@ -83,7 +83,7 @@ func (store *Store) Get(filename string) (result []byte, err error) {
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}
@@ -98,7 +98,7 @@ func (store *Store) Get(filename string) (result []byte, err error) {
 	return result, err
 }
 
-func (store *Store) Delete(filename string) (err error) {
+func (store *Store) Delete(collection, filename string) (err error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
@@ -106,7 +106,7 @@ func (store *Store) Delete(filename string) (err error) {
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(store.Collection))
+		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}

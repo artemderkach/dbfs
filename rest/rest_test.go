@@ -29,7 +29,7 @@ func TestHome(t *testing.T) {
 }
 
 func TestView(t *testing.T) {
-	URL := "/view"
+	URL := "/public/view"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -46,7 +46,7 @@ func TestView(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	URL := "/put"
+	URL := "/public/put"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -61,12 +61,12 @@ func TestPut(t *testing.T) {
 	_, err = http.Post(ts.URL+URL, header, body)
 	require.Nil(t, err)
 
-	view, err := r.Store.View()
+	view, err := r.Store.View("public")
 	assert.Equal(t, "Neo\nanswer\nfilename.txt\n", string(view))
 }
 
 func TestGet(t *testing.T) {
-	URL := "/download/answer"
+	URL := "/public/download/answer"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -83,7 +83,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	URL := "/delete/answer"
+	URL := "/public/delete/answer"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -121,13 +121,13 @@ func getStore() (*store.Store, error) {
 	}
 
 	r := strings.NewReader("42")
-	err := s.Put("answer", r)
+	err := s.Put("public", "answer", r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The One")
-	err = s.Put("Neo", r)
+	err = s.Put("public", "Neo", r)
 	if err != nil {
 		return nil, err
 	}
