@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -14,22 +13,30 @@ import (
 
 func TestMain(t *testing.T) {
 	go func() {
-		time.Sleep(5000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 		e := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 		require.Nil(t, e)
 	}()
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	// wg := sync.WaitGroup{}
+	// wg.Add(1)
+	// go func() {
+	// 	st := time.Now()
+	// 	main()
+	// 	assert.True(t, time.Since(st).Seconds() >= 5, "should take about 5s")
+	// 	time.Sleep(1000 * time.Millisecond)
+	// 	wg.Done()
+	// }()
 	go func() {
-		st := time.Now()
 		main()
-		assert.True(t, time.Since(st).Seconds() >= 5, "should take about 5s")
-		wg.Done()
 	}()
+
+
+	time.Sleep(1000 * time.Millisecond)
 
 	resp, err := http.Get("http://localhost:8080")
 	require.Nil(t, err)
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	require.Nil(t, err)
