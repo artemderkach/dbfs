@@ -16,10 +16,10 @@ type Rest struct {
 func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/", rest.home).Methods("GET")
-	router.HandleFunc("{collection}/view", rest.view).Methods("GET")
-	router.HandleFunc("{collection}/put", rest.put).Methods("POST")
-	router.HandleFunc("{collection}/download/{filename}", rest.download).Methods("GET")
-	router.HandleFunc("{collection}/delete/{filename}", rest.delete).Methods("DELETE")
+	router.HandleFunc("/{collection}/view", rest.view).Methods("GET")
+	router.HandleFunc("/{collection}/put", rest.put).Methods("POST")
+	router.HandleFunc("/{collection}/download/{filename}", rest.download).Methods("GET")
+	router.HandleFunc("/{collection}/delete/{filename}", rest.delete).Methods("DELETE")
 
 	return router
 }
