@@ -111,12 +111,12 @@ func TestPrivate(t *testing.T) {
 	}{
 		{
 			"/private/download/try",
-			"super_secret_password",
+			"1",
 			"leave \"if err != nil\" alone",
 		},
 		{
 			"/private/download/try",
-			"super_wrong_password",
+			"2",
 			"permission denied",
 		},
 	}
@@ -142,6 +142,7 @@ func TestPrivate(t *testing.T) {
 
 		assert.Equal(t, test.response, string(body))
 	}
+
 }
 
 func getRest() (*Rest, error) {
@@ -151,7 +152,7 @@ func getRest() (*Rest, error) {
 	}
 	r := &Rest{
 		Store: s,
-		APP_PASS:  "super_secret_password",
+		APP_PASS:  "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
 	}
 	return r, nil
 }

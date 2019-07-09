@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 
@@ -10,8 +11,8 @@ import (
 )
 
 type Rest struct {
-	Store *store.Store
-	APP_PASS  string
+	Store    *store.Store
+	APP_PASS string
 }
 
 func (rest *Rest) Router() *mux.Router {
@@ -155,10 +156,12 @@ func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
 		vars := mux.Vars(r)
 		collection := vars["collection"]
 
-	if collection == "private" {
-			pass := r.Header.Get("Custom-Auth")
+		if collection == "private" {
+			hashedPass := r.Header.Get("Custom-Auth")
+			pass := sha256.Sum256([]byte(hashedPass))
 
-			if pass != rest.APP_PASS {
+			if fmt.Sprintf("%x", pass) != rest.APP_PASS {
+
 				w.Write([]byte("permission denied"))
 				return
 			}
