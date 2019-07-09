@@ -11,6 +11,7 @@ import (
 
 type Rest struct {
 	Store *store.Store
+	APP_Pass  string
 }
 
 func (rest *Rest) Router() *mux.Router {
@@ -20,6 +21,7 @@ func (rest *Rest) Router() *mux.Router {
 	router.HandleFunc("/{collection}/put", rest.put).Methods("POST")
 	router.HandleFunc("/{collection}/download/{filename}", rest.download).Methods("GET")
 	router.HandleFunc("/{collection}/delete/{filename}", rest.delete).Methods("DELETE")
+	router.Use(rest.permissionCheck)
 
 	return router
 }
@@ -146,6 +148,24 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello from DBFS"))
+}
+
+func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		collection := vars["collection"]
+
+	if collection == "private" {
+			pass := r.Header.Get("Custom-Auth")
+
+			if pass != rest.APP_Pass {
+				w.Write([]byte("permission denied"))
+				return
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func validateCollection(collection string) (err error) {

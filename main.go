@@ -18,6 +18,7 @@ type App struct {
 type Env struct {
 	APP_PORT string
 	DB_PATH  string
+	APP_PASS string
 }
 
 func main() {
@@ -28,9 +29,9 @@ func main() {
 	app := &App{
 		Rest: &rest.Rest{
 			Store: &store.Store{
-				Path:       env.DB_PATH,
-				Collection: "files",
+				Path: env.DB_PATH,
 			},
+			APP_Pass: env.APP_PASS,
 		},
 		Env: env,
 	}
@@ -55,6 +56,12 @@ func parseEnv() *Env {
 		dbPath = "/tmp/mydb.bolt"
 	}
 	env.DB_PATH = dbPath
+
+	pass, exists := os.LookupEnv("APP_PASS")
+	if !exists {
+		dbPath = ""
+	}
+	env.APP_PASS = pass
 
 	return env
 }

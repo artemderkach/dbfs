@@ -10,8 +10,7 @@ import (
 )
 
 type Store struct {
-	Path       string
-	Collection string
+	Path string
 }
 
 func (store *Store) Drop() error {

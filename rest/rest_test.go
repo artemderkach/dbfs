@@ -103,6 +103,47 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, "Neo\n", string(msg))
 }
 
+func TestPrivate(t *testing.T) {
+	tt := []struct {
+		url      string
+		header   string
+		response string
+	}{
+		{
+			"/private/download/try",
+			"super_secret_password",
+			"leave \"if err != nil\" alone",
+		},
+		{
+			"/private/download/try",
+			"super_wrong_password",
+			"permission denied",
+		},
+	}
+
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
+
+	for _, test := range tt {
+		client := &http.Client{}
+		req, err := http.NewRequest(http.MethodGet, ts.URL+test.url, nil)
+		require.Nil(t, err)
+		req.Header.Add("Custom-Auth", test.header)
+
+		resp, err := client.Do(req)
+		require.Nil(t, err)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		assert.Equal(t, test.response, string(body))
+	}
+}
+
 func getRest() (*Rest, error) {
 	s, err := getStore()
 	if err != nil {
@@ -110,14 +151,14 @@ func getRest() (*Rest, error) {
 	}
 	r := &Rest{
 		Store: s,
+		APP_Pass:  "super_secret_password",
 	}
 	return r, nil
 }
 
 func getStore() (*store.Store, error) {
 	s := &store.Store{
-		Path:       "/tmp/db123",
-		Collection: "files",
+		Path: "/tmp/db123",
 	}
 
 	r := strings.NewReader("42")
@@ -128,6 +169,12 @@ func getStore() (*store.Store, error) {
 
 	r = strings.NewReader("The One")
 	err = s.Put("public", "Neo", r)
+	if err != nil {
+		return nil, err
+	}
+
+	r = strings.NewReader("leave \"if err != nil\" alone")
+	err = s.Put("private", "try", r)
 	if err != nil {
 		return nil, err
 	}
