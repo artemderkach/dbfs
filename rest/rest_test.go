@@ -151,7 +151,7 @@ func getRest() (*Rest, error) {
 	}
 	r := &Rest{
 		Store: s,
-		APP_Pass:  "super_secret_password",
+		APP_PASS:  "super_secret_password",
 	}
 	return r, nil
 }

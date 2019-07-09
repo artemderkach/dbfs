@@ -11,7 +11,7 @@ import (
 
 type Rest struct {
 	Store *store.Store
-	APP_Pass  string
+	APP_PASS  string
 }
 
 func (rest *Rest) Router() *mux.Router {
@@ -158,7 +158,7 @@ func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
 	if collection == "private" {
 			pass := r.Header.Get("Custom-Auth")
 
-			if pass != rest.APP_Pass {
+			if pass != rest.APP_PASS {
 				w.Write([]byte("permission denied"))
 				return
 			}

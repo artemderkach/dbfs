@@ -31,7 +31,7 @@ func main() {
 			Store: &store.Store{
 				Path: env.DB_PATH,
 			},
-			APP_Pass: env.APP_PASS,
+			APP_PASS: env.APP_PASS,
 		},
 		Env: env,
 	}
