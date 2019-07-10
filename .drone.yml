@@ -9,7 +9,7 @@ steps:
 - name: test
   image: golang:1.12.6-alpine3.9
   commands:
-  - CGO_ENABLED=0 GO111MODULE=on go test ./...
+  - CGO_ENABLED=0 GO111MODULE=on go test -mod=vendor ./...
 
 - name: docker
   image: plugins/docker

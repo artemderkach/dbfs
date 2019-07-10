@@ -4,8 +4,8 @@ WORKDIR /srv/dbfs
 
 COPY . .
 
-# RUN CGO_ENABLED=0 GO111MODULE=on go test -mod vendor ./...
-RUN GO111MODULE=on go build -mod vendor
+# RUN CGO_ENABLED=0 GO111MODULE=on go test -mod=vendor ./...
+RUN GO111MODULE=on go build -mod=vendor
 
 FROM alpine:3.9
 
