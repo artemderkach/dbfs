@@ -156,11 +156,11 @@ func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
 		vars := mux.Vars(r)
 		collection := vars["collection"]
 
-		if collection == "private" {
-			hashedPass := r.Header.Get("Custom-Auth")
-			pass := sha256.Sum256([]byte(hashedPass))
+		if collection == "private" && len(rest.APP_PASS) != 0 {
+			pass := r.Header.Get("Custom-Auth")
+			hashedPass := sha256.Sum256([]byte(pass))
 
-			if fmt.Sprintf("%x", pass) != rest.APP_PASS {
+			if fmt.Sprintf("%x", hashedPass) != rest.APP_PASS {
 
 				w.Write([]byte("permission denied"))
 				return
