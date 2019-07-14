@@ -179,7 +179,7 @@ func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
 		vars := mux.Vars(r)
 		collection := vars["collection"]
 
-		if collection == "private" {
+		if collection == "private" && len(rest.APP_PASS) != 0 {
 			pass := r.Header.Get("Custom-Auth")
 			hashedPass := sha256.Sum256([]byte(pass))
 
