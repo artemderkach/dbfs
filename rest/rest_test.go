@@ -42,11 +42,11 @@ func TestView(t *testing.T) {
 
 	msg, err := ioutil.ReadAll(resp.Body)
 	require.Nil(t, err)
-	assert.Equal(t, "Neo\nanswer\n", string(msg))
+	assert.Equal(t, "Neo\nanswer\nme\n  and\n", string(msg))
 }
 
 func TestPut(t *testing.T) {
-	URL := "/public/put"
+	URL := "/public/put/me/epic/files/"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -58,11 +58,13 @@ func TestPut(t *testing.T) {
 	body, header, err := multipartFile("file", "filename.txt", file)
 	require.Nil(t, err)
 
-	_, err = http.Post(ts.URL+URL, header, body)
+	resp, err := http.Post(ts.URL+URL, header, body)
 	require.Nil(t, err)
 
-	view, err := r.Store.View("public")
-	assert.Equal(t, "Neo\nanswer\nfilename.txt\n", string(view))
+	view, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+
+	assert.Equal(t, "Neo\nanswer\nme\n  and\n  epic\n    files\n      filename.txt\n", string(view))
 }
 
 func TestGet(t *testing.T) {
@@ -100,7 +102,7 @@ func TestDelete(t *testing.T) {
 
 	msg, err := ioutil.ReadAll(resp.Body)
 	require.Nil(t, err)
-	assert.Equal(t, "Neo\n", string(msg))
+	assert.Equal(t, "Neo\nme\n  and\n", string(msg))
 }
 
 func TestPrivate(t *testing.T) {
@@ -170,6 +172,12 @@ func getStore() (*store.Store, error) {
 
 	r = strings.NewReader("The One")
 	err = s.Put("public", "Neo", r)
+	if err != nil {
+		return nil, err
+	}
+
+	r = strings.NewReader("The Boys")
+	err = s.Put("public", "/me/and", r)
 	if err != nil {
 		return nil, err
 	}
