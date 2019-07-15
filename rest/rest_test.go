@@ -46,7 +46,7 @@ func TestView(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	URL := "/public/put/me/epic/files/"
+	URL := "/public/put"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -54,8 +54,8 @@ func TestPut(t *testing.T) {
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
-	file := strings.NewReader("Ok, that was epic!\n")
-	body, header, err := multipartFile("file", "filename.txt", file)
+	file := strings.NewReader("Content")
+	body, header, err := multipartFile("file", "file", file)
 	require.Nil(t, err)
 
 	resp, err := http.Post(ts.URL+URL, header, body)
@@ -64,7 +64,21 @@ func TestPut(t *testing.T) {
 	view, err := ioutil.ReadAll(resp.Body)
 	require.Nil(t, err)
 
-	assert.Equal(t, "Neo\nanswer\nme\n  and\n  epic\n    files\n      filename.txt\n", string(view))
+	assert.Equal(t, "Neo\nanswer\nfile\nme\n  and\n", string(view))
+
+	URL = "/public/put/me/epic/files/"
+
+	file = strings.NewReader("Ok, that was epic!\n")
+	body, header, err = multipartFile("file", "filename.txt", file)
+	require.Nil(t, err)
+
+	resp, err = http.Post(ts.URL+URL, header, body)
+	require.Nil(t, err)
+
+	view, err = ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+
+	assert.Equal(t, "Neo\nanswer\nfile\nme\n  and\n  epic\n    files\n      filename.txt\n", string(view))
 }
 
 func TestGet(t *testing.T) {
