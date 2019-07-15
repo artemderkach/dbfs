@@ -184,8 +184,6 @@ func (rest *Rest) permissionCheck(next http.Handler) http.Handler {
 			hashedPass := sha256.Sum256([]byte(pass))
 
 			if fmt.Sprintf("%x", hashedPass) != rest.APP_PASS {
-				fmt.Println(rest.APP_PASS)
-				fmt.Println(fmt.Sprintf("%x", hashedPass))
 				w.Write([]byte("permission denied"))
 				return
 			}
