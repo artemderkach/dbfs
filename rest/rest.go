@@ -21,9 +21,9 @@ func (rest *Rest) Router() *mux.Router {
 	router.Use(rest.permissionCheck)
 	router.HandleFunc("/", rest.home).Methods("GET")
 	router.HandleFunc("/{collection}/view", rest.view).Methods("GET")
-	router.PathPrefix("/{collection}/put").HandlerFunc(rest.put).Methods("POST")
+	router.PathPrefix("/{collection}").HandlerFunc(rest.put).Methods("POST")
 	router.PathPrefix("/{collection}/download").HandlerFunc(rest.download).Methods("GET")
-	router.PathPrefix("/{collection}/delete").HandlerFunc(rest.delete).Methods("DELETE")
+	router.PathPrefix("/{collection}").HandlerFunc(rest.delete).Methods("DELETE")
 
 	return router
 }
@@ -32,7 +32,17 @@ func (rest *Rest) Router() *mux.Router {
 // returnes current state of database (/view route)
 func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	reg, err := regexp.Compile("^.+delete")
+
+	collection := vars["collection"]
+	err := validateCollection(collection)
+	if err != nil {
+		err = errors.Wrap(err, "invalid collection parameter")
+		fmt.Println(err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	reg, err := regexp.Compile("/" + collection)
 	if err != nil {
 		err = errors.Wrap(err, "error parsing regexp")
 		fmt.Println(err)
@@ -40,15 +50,6 @@ func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path := reg.ReplaceAllString(r.URL.Path, "")
-
-	collection := vars["collection"]
-	err = validateCollection(collection)
-	if err != nil {
-		err = errors.Wrap(err, "invalid collection parameter")
-		fmt.Println(err)
-		w.Write([]byte(err.Error()))
-		return
-	}
 
 	err = rest.Store.Delete(collection, path)
 	if err != nil {
@@ -126,7 +127,17 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 // Take "multipart/form-data" request with "file" key
 func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	reg, err := regexp.Compile("^.+put")
+
+	collection := vars["collection"]
+	err := validateCollection(collection)
+	if err != nil {
+		err = errors.Wrap(err, "invalid collection parameter")
+		fmt.Println(err)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	reg, err := regexp.Compile("/" + collection)
 	if err != nil {
 		err = errors.Wrap(err, "error compiling regexp")
 		fmt.Println(err)
@@ -138,15 +149,6 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		err = errors.Wrap(err, "error parsing FormFile")
-		fmt.Println(err)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	collection := vars["collection"]
-	err = validateCollection(collection)
-	if err != nil {
-		err = errors.Wrap(err, "invalid collection parameter")
 		fmt.Println(err)
 		w.Write([]byte(err.Error()))
 		return

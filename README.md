@@ -14,10 +14,10 @@ just for the memes
 for `private` route, `Custom-Auth` header should be set. Value should be your password  
 
 - `GET /{collection}/view` return the current state of database
-- `POST /{collection}/put{this/will/be/my/filepath}` create record with file in database  
+- `POST /{collection}/{this/will/be/my/filepath}` create record with file in database  
    expect "multipart/form-data" format.
 - `GET /{collection}/download/{this/will/be/my/filepath/andFilename}` return content of "filename" 
-- `DELETE /{collection}/delete/{this/will/be/my/filepathOrFilename}` returns `GET /view` after deletion
+- `DELETE /{collection}/{this/will/be/my/filepathOrFilename}` returns `GET /view` after deletion
 
 ## examples
 ```
@@ -27,7 +27,7 @@ $
 $ curl -F file=@.emacs localhost:8080/public/put
 .bashrc
 .emacs
-$ curl localhost:8080/public/delete/.bashrc
+$ curl -X "DELETE" localhost:8080/public/.bashrc
 .emacs
 
 $ curl -F file=@.bashrc localhost:8080/private/put

@@ -46,7 +46,7 @@ func TestView(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	URL := "/public/put"
+	URL := "/public"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -66,7 +66,7 @@ func TestPut(t *testing.T) {
 
 	assert.Equal(t, "Neo\nanswer\nfile\nme\n  and\n", string(view))
 
-	URL = "/public/put/me/epic/files/"
+	URL = "/public/me/epic/files/"
 
 	file = strings.NewReader("Ok, that was epic!\n")
 	body, header, err = multipartFile("file", "filename.txt", file)
@@ -99,7 +99,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	URL := "/public/delete/answer"
+	URL := "/public/answer"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
