@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
