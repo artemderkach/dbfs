@@ -177,9 +177,13 @@ func getStore() (*store.Store, error) {
 	s := &store.Store{
 		Path: "/tmp/db123",
 	}
+	err := s.Open()
+	if err != nil {
+		return nil, err
+	}
 
 	r := strings.NewReader("42")
-	err := s.Put("public", "answer", r)
+	err = s.Put("public", "answer", r)
 	if err != nil {
 		return nil, err
 	}

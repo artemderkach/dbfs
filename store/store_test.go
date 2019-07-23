@@ -15,6 +15,7 @@ var DB_PATH = "/tmp/myTestDB.bolt"
 func TestView(t *testing.T) {
 	s, err := initStore()
 	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
 	require.Nil(t, err)
 
 	result, err := s.View("public")
@@ -26,6 +27,7 @@ func TestView(t *testing.T) {
 func TestPut(t *testing.T) {
 	s, err := initStore()
 	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
 	require.Nil(t, err)
 
 	file := strings.NewReader("Next Meme")
@@ -65,6 +67,7 @@ func TestPut(t *testing.T) {
 func TestGet(t *testing.T) {
 	s, err := initStore()
 	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
 	require.Nil(t, err)
 
 	b, err := s.Get("public", "1/2")
@@ -79,6 +82,7 @@ func TestGet(t *testing.T) {
 func TestDelete(t *testing.T) {
 	s, err := initStore()
 	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
 	require.Nil(t, err)
 
 	err = s.Delete("public", "1/2")
@@ -95,15 +99,14 @@ func TestDelete(t *testing.T) {
 }
 
 func initStore() (*Store, error) {
-	s := &Store{
-		Path: DB_PATH,
-	}
-
 	db, err := bolt.Open(DB_PATH, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	s := &Store{
+		Path: DB_PATH,
+		DB:   db,
+	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("public"))

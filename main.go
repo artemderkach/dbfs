@@ -25,18 +25,23 @@ func main() {
 	fmt.Println("running dbfs on :8080")
 
 	env := parseEnv()
-
 	app := &App{
 		Rest: &rest.Rest{
 			Store: &store.Store{
 				Path: env.DB_PATH,
+				DB:   nil,
 			},
 			APP_PASS: env.APP_PASS,
 		},
 		Env: env,
 	}
 
-	err := http.ListenAndServe(":"+env.APP_PORT, app.Rest.Router())
+	err := app.Rest.Store.Open()
+	if err != nil {
+		panic(errors.Wrap(err, "erorr opening database"))
+	}
+
+	err = http.ListenAndServe(":"+env.APP_PORT, app.Rest.Router())
 	if err != nil {
 		panic(errors.Wrap(err, "error starting dbfs server"))
 	}

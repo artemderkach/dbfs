@@ -12,24 +12,32 @@ import (
 
 type Store struct {
 	Path string
+	DB   *bolt.DB
+}
+
+func (store *Store) Open() error {
+	db, err := bolt.Open(store.Path, 0600, nil)
+	if err != nil {
+		return errors.Wrap(err, "erorr opening database")
+	}
+
+	store.DB = db
+
+	return nil
 }
 
 func (store *Store) Drop() error {
+	store.DB.Close()
 	err := os.Remove(store.Path)
 	if err != nil {
 		return errors.Wrap(err, "error dropping database")
 	}
+
 	return nil
 }
 
 func (store *Store) View(collection string) (result []byte, err error) {
-	db, err := bolt.Open(store.Path, 0600, nil)
-	if err != nil {
-		return []byte(""), errors.Wrap(err, "error opening database")
-	}
-	defer db.Close()
-
-	err = db.View(func(tx *bolt.Tx) error {
+	err = store.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
 			return errors.Errorf("bucket %s not exists", collection)
@@ -44,12 +52,6 @@ func (store *Store) View(collection string) (result []byte, err error) {
 }
 
 func (store *Store) Put(collection, path string, file io.Reader) error {
-	db, err := bolt.Open(store.Path, 0600, nil)
-	if err != nil {
-		return errors.Wrap(err, "error opening database")
-	}
-	defer db.Close()
-
 	elements := strings.Split(path, "/")
 	filterdElements := make([]string, 0)
 	for _, element := range elements {
@@ -59,7 +61,7 @@ func (store *Store) Put(collection, path string, file io.Reader) error {
 		filterdElements = append(filterdElements, element)
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err := store.DB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
@@ -93,12 +95,6 @@ func (store *Store) Put(collection, path string, file io.Reader) error {
 }
 
 func (store *Store) Get(collection, path string) (result []byte, err error) {
-	db, err := bolt.Open(store.Path, 0600, nil)
-	if err != nil {
-		return []byte(""), errors.Wrap(err, "error opening database")
-	}
-	defer db.Close()
-
 	elements := strings.Split(path, "/")
 	filterdElements := make([]string, 0)
 	for _, element := range elements {
@@ -108,7 +104,7 @@ func (store *Store) Get(collection, path string) (result []byte, err error) {
 		filterdElements = append(filterdElements, element)
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = store.DB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
@@ -136,12 +132,6 @@ func (store *Store) Get(collection, path string) (result []byte, err error) {
 }
 
 func (store *Store) Delete(collection, path string) (err error) {
-	db, err := bolt.Open(store.Path, 0600, nil)
-	if err != nil {
-		return errors.Wrap(err, "error opening database")
-	}
-	defer db.Close()
-
 	elements := strings.Split(path, "/")
 	filterdElements := make([]string, 0)
 	for _, element := range elements {
@@ -151,7 +141,7 @@ func (store *Store) Delete(collection, path string) (err error) {
 		filterdElements = append(filterdElements, element)
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = store.DB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
