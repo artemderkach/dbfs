@@ -157,12 +157,10 @@ func (store *Store) Delete(collection, path string) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}
-		fmt.Println("=========", filterdElements)
 		for i, filterdElement := range filterdElements {
 
 			// last element should be the file, other ones - folders
 			if i+1 != len(filterdElements) {
-				fmt.Println("========")
 				b, err = b.CreateBucketIfNotExists([]byte(filterdElement))
 				if err != nil {
 					return errors.Wrap(err, "error opening bucket")
