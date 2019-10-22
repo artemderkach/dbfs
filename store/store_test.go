@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
@@ -11,9 +12,6 @@ import (
 )
 
 var DB_PATH = "/tmp/myTestDB.bolt"
-
-func TestView(t *testing.T) {
-}
 
 func TestPut(t *testing.T) {
 	s, err := initStore()
@@ -56,15 +54,55 @@ func TestPut(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	tt := []struct {
+		Collection string
+		Keys       []string
+		Result     string
+	}{
+		{
+			"public",
+			[]string{},
+			"1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n",
+		},
+		{
+			"public",
+			[]string{"1"},
+			"2\n",
+		},
+		{
+			"public",
+			[]string{"The Ring"},
+			"My precious",
+		},
+		{
+			"public",
+			[]string{"a", "b", "c"},
+			"Hello there\n",
+		},
+		{
+			"public",
+			[]string{"a", "b", "c", "Hello there"},
+			"General Kenobi",
+		},
+		{
+			"public",
+			[]string{"invalid name kfj;lkdfj:"},
+			"General Kenobi",
+		},
+	}
+
 	s, err := initStore()
-	defer s.Close()
+	require.Nil(t, err)
+	defer s.DB.Close()
 	defer s.Drop()
 	require.Nil(t, err)
 
-	result, err := s.View("public")
-	require.Nil(t, err)
+	for _, test := range tt {
+		result, err := s.Get(test.Collection, test.Keys)
+		require.Nil(t, err)
 
-	assert.Equal(t, "1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n", string(result))
+		assert.Equal(t, test.Result, string(result))
+	}
 	// 	s, err := initStore()
 	// 	defer os.Remove(DB_PATH)
 	// 	require.Nil(t, err)
@@ -97,11 +135,20 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, "1\nThe Ring\n", string(view))
 }
 
+// view of db
+// 1
+//   2
+// The Ring
+// a
+//   b
+//     c
+// Hello there
 func initStore() (*Store, error) {
-	db, err := bolt.Open(DB_PATH, 0600, nil)
+	db, err := bolt.Open(DB_PATH, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return nil, err
 	}
+	defer db.Close()
 	s := &Store{
 		Path: DB_PATH,
 		DB:   db,

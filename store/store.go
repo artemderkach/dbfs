@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -19,7 +18,7 @@ type Store struct {
 func (store *Store) Open() error {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
-		return errors.Wrap(err, "erorr opening database")
+		return errors.Wrap(err, "error opening database")
 	}
 
 	store.DB = db
@@ -114,7 +113,6 @@ func (store *Store) Put(collection, path string, file io.Reader) error {
 // 2. In case of last element is file, will return file content
 // 3. Error either from invalid key or smth other
 func (store *Store) Get(collection string, keys []string) ([]byte, error) {
-	fmt.Println("======>", collection, keys)
 	err := store.Open()
 	if err != nil {
 		return nil, errors.Wrap(err, "error opening database")
@@ -122,11 +120,17 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 	defer store.DB.Close()
 
 	var result []byte
-	err = store.DB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(collection))
-		if err != nil {
-			return errors.Wrap(err, "error opening bucket")
+	err = store.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(collection))
+		if b == nil {
+			return errors.Wrap(err, "bucket not exists")
 		}
+		// handle case for top level bucket
+		if len(keys) == 0 {
+			result = []byte(nestedView(b, ""))
+			return nil
+		}
+
 		for i, key := range keys {
 			// skip last element, it will be checked after loop
 			if i == len(keys)-1 {
@@ -140,16 +144,17 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		// check the last element (could be file or bucket)
 		lastElem := ""
-		if len(keys) != 0 {
-			lastElem = keys[len(keys)-1]
-		}
+		lastElem = keys[len(keys)-1]
 		lastBucket := b.Bucket([]byte(lastElem))
 		if lastBucket == nil {
 			v := b.Get([]byte(lastElem))
+			if v == nil {
+				return errors.Wrap(err, "bucket "+lastElem+" not exists")
+			}
 			result = make([]byte, len(v))
 			copy(result, v)
 		} else {
-			result = []byte(nestedView(b, "  "))
+			result = []byte(nestedView(lastBucket, ""))
 		}
 
 		return nil
@@ -207,9 +212,10 @@ func (store *Store) Delete(collection, path string) error {
 
 // nestedView runs throug every bucket recursively
 // in the end we'll get tree view of data
-func nestedView(b *bolt.Bucket, indent string) (view string) {
-	c := b.Cursor()
+func nestedView(b *bolt.Bucket, indent string) string {
+	var view string
 
+	c := b.Cursor()
 	for k, _ := c.First(); k != nil; k, _ = c.Next() {
 		view += indent + string(k) + "\n"
 
