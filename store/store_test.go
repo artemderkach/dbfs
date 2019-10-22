@@ -13,15 +13,6 @@ import (
 var DB_PATH = "/tmp/myTestDB.bolt"
 
 func TestView(t *testing.T) {
-	s, err := initStore()
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
-	require.Nil(t, err)
-
-	result, err := s.View("public")
-	require.Nil(t, err)
-
-	assert.Equal(t, "1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n", string(result))
 }
 
 func TestPut(t *testing.T) {
@@ -66,17 +57,25 @@ func TestPut(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	s, err := initStore()
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
+	defer s.Close()
+	defer s.Drop()
 	require.Nil(t, err)
 
-	b, err := s.Get("public", "1/2")
+	result, err := s.View("public")
 	require.Nil(t, err)
-	assert.Equal(t, "0", string(b))
 
-	b, err = s.Get("public", "empty")
-	require.Nil(t, err)
-	assert.Equal(t, "", string(b))
+	assert.Equal(t, "1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n", string(result))
+	// 	s, err := initStore()
+	// 	defer os.Remove(DB_PATH)
+	// 	require.Nil(t, err)
+	//
+	// 	b, err := s.Get("public", "1/2")
+	// 	require.Nil(t, err)
+	// 	assert.Equal(t, "0", string(b))
+	//
+	// 	b, err = s.Get("public", "empty")
+	// 	require.Nil(t, err)
+	// 	assert.Equal(t, "", string(b))
 }
 
 func TestDelete(t *testing.T) {

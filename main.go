@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -22,8 +23,6 @@ type Env struct {
 }
 
 func main() {
-	fmt.Println("running dbfs on :8080")
-
 	env := parseEnv()
 	app := &App{
 		Rest: &rest.Rest{
@@ -36,14 +35,10 @@ func main() {
 		Env: env,
 	}
 
-	err := app.Rest.Store.Open()
+	fmt.Println("starting dbfs on localhost:" + env.APP_PORT)
+	err := http.ListenAndServe(":"+env.APP_PORT, app.Rest.Router())
 	if err != nil {
-		panic(errors.Wrap(err, "erorr opening database"))
-	}
-
-	err = http.ListenAndServe(":"+env.APP_PORT, app.Rest.Router())
-	if err != nil {
-		panic(errors.Wrap(err, "error starting dbfs server"))
+		log.Fatal(errors.Wrap(err, "error starting dbfs server"))
 	}
 }
 

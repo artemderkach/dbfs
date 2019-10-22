@@ -15,21 +15,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHome(t *testing.T) {
-	r := Rest{}
-	ts := httptest.NewServer(r.Router())
-	defer ts.Close()
-
-	resp, err := http.Get(ts.URL)
-	require.Nil(t, err)
-
-	msg, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "Hello from DBFS", string(msg))
-}
-
 func TestView(t *testing.T) {
-	URL := "/public/view"
+	tt := []struct {
+		Path         string
+		ResponseBody string
+	}{
+		{BasePath, "Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n"},
+		{BasePath + "/must", "have\n  been\n    like\n"},
+	}
+
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -37,12 +31,14 @@ func TestView(t *testing.T) {
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + URL)
-	require.Nil(t, err)
+	for _, test := range tt {
+		resp, err := http.Get(ts.URL + test.Path)
+		require.Nil(t, err)
 
-	msg, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "Neo\nanswer\nme\n  and\n", string(msg))
+		msg, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
+		assert.Equal(t, test.ResponseBody, string(msg))
+	}
 }
 
 func TestPut(t *testing.T) {
@@ -119,47 +115,47 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, "Neo\nme\n  and\n", string(msg))
 }
 
-func TestPrivate(t *testing.T) {
-	tt := []struct {
-		url      string
-		header   string
-		response string
-	}{
-		{
-			"/private/download/try",
-			"1",
-			"leave \"if err != nil\" alone",
-		},
-		{
-			"/private/download/try",
-			"2",
-			"permission denied",
-		},
-	}
-
-	r, err := getRest()
-	require.Nil(t, err)
-	defer r.Store.Drop()
-
-	ts := httptest.NewServer(r.Router())
-	defer ts.Close()
-
-	for _, test := range tt {
-		client := &http.Client{}
-		req, err := http.NewRequest(http.MethodGet, ts.URL+test.url, nil)
-		require.Nil(t, err)
-		req.Header.Add("Custom-Auth", test.header)
-
-		resp, err := client.Do(req)
-		require.Nil(t, err)
-
-		body, err := ioutil.ReadAll(resp.Body)
-		require.Nil(t, err)
-
-		assert.Equal(t, test.response, string(body))
-	}
-
-}
+// func TestPrivate(t *testing.T) {
+// 	tt := []struct {
+// 		url      string
+// 		header   string
+// 		response string
+// 	}{
+// 		{
+// 			"/private/download/try",
+// 			"1",
+// 			"leave \"if err != nil\" alone",
+// 		},
+// 		{
+// 			"/private/download/try",
+// 			"2",
+// 			"permission denied",
+// 		},
+// 	}
+//
+// 	r, err := getRest()
+// 	require.Nil(t, err)
+// 	defer r.Store.Drop()
+//
+// 	ts := httptest.NewServer(r.Router())
+// 	defer ts.Close()
+//
+// 	for _, test := range tt {
+// 		client := &http.Client{}
+// 		req, err := http.NewRequest(http.MethodGet, ts.URL+test.url, nil)
+// 		require.Nil(t, err)
+// 		req.Header.Add("Custom-Auth", test.header)
+//
+// 		resp, err := client.Do(req)
+// 		require.Nil(t, err)
+//
+// 		body, err := ioutil.ReadAll(resp.Body)
+// 		require.Nil(t, err)
+//
+// 		assert.Equal(t, test.response, string(body))
+// 	}
+//
+// }
 
 func getRest() (*Rest, error) {
 	s, err := getStore()
@@ -167,8 +163,8 @@ func getRest() (*Rest, error) {
 		return nil, err
 	}
 	r := &Rest{
-		Store: s,
-		APP_PASS:  "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+		Store:    s,
+		APP_PASS: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
 	}
 	return r, nil
 }
@@ -177,34 +173,34 @@ func getStore() (*store.Store, error) {
 	s := &store.Store{
 		Path: "/tmp/db123",
 	}
-	err := s.Open()
-	if err != nil {
-		return nil, err
-	}
-
 	r := strings.NewReader("42")
-	err = s.Put("public", "answer", r)
+	err := s.Put("default", "answer", r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The One")
-	err = s.Put("public", "Neo", r)
+	err = s.Put("default", "Neo", r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The Boys")
-	err = s.Put("public", "/me/and", r)
+	err = s.Put("default", "/me/and", r)
 	if err != nil {
 		return nil, err
 	}
 
-	r = strings.NewReader("leave \"if err != nil\" alone")
-	err = s.Put("private", "try", r)
+	r = strings.NewReader("blinking guy")
+	err = s.Put("default", "/must/have/been/like", r)
 	if err != nil {
 		return nil, err
 	}
+	// r = strings.NewReader("leave \"if err != nil\" alone")
+	// err = s.Put("private", "try", r)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return s, nil
 }
@@ -213,6 +209,7 @@ func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, 
 	body := &bytes.Buffer{}
 
 	writer := multipart.NewWriter(body)
+	defer writer.Close()
 	part, err := writer.CreateFormFile(keyName, fileName)
 	if err != nil {
 		return nil, "", err
@@ -221,7 +218,6 @@ func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, 
 	if err != nil {
 		return nil, "", err
 	}
-	writer.Close()
 
 	return body, writer.FormDataContentType(), nil
 }
