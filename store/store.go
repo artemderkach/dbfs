@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -125,6 +126,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 		if b == nil {
 			return errors.Wrap(err, "bucket not exists")
 		}
+
 		// handle case for top level bucket
 		if len(keys) == 0 {
 			result = []byte(nestedView(b, ""))
@@ -138,27 +140,34 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 			}
 			b = b.Bucket([]byte(key))
 			if b == nil {
-				return errors.Wrap(err, "bucket "+key+" not exists")
+				return errors.Wrap(err, "bucketfjdkfj \""+key+"\" not exists")
 			}
 		}
 
 		// check the last element (could be file or bucket)
-		lastElem := ""
-		lastElem = keys[len(keys)-1]
-		lastBucket := b.Bucket([]byte(lastElem))
-		if lastBucket == nil {
-			v := b.Get([]byte(lastElem))
-			if v == nil {
-				return errors.Wrap(err, "bucket "+lastElem+" not exists")
-			}
+		lastElem := keys[len(keys)-1]
+
+		// if the last element is bucket
+		if b.Bucket([]byte(lastElem)) != nil {
+			fmt.Println("bucket")
+			result = []byte(nestedView(b.Bucket([]byte(lastElem)), ""))
+			return nil
+		}
+		// if the last element is file
+		v := b.Get([]byte(lastElem))
+		if v != nil {
+			fmt.Println("file")
 			result = make([]byte, len(v))
 			copy(result, v)
-		} else {
-			result = []byte(nestedView(lastBucket, ""))
+			return nil
 		}
 
-		return nil
+		fmt.Println("err")
+		return errors.New("bucket " + lastElem + " not exists")
 	})
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting elements from bucket")
+	}
 
 	return result, err
 }

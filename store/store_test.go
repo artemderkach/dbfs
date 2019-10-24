@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,36 +59,43 @@ func TestGet(t *testing.T) {
 		Collection string
 		Keys       []string
 		Result     string
+		Error      error
 	}{
 		{
 			"public",
 			[]string{},
 			"1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n",
+			nil,
 		},
 		{
 			"public",
 			[]string{"1"},
 			"2\n",
+			nil,
 		},
 		{
 			"public",
 			[]string{"The Ring"},
 			"My precious",
+			nil,
 		},
 		{
 			"public",
 			[]string{"a", "b", "c"},
 			"Hello there\n",
+			nil,
 		},
 		{
 			"public",
 			[]string{"a", "b", "c", "Hello there"},
 			"General Kenobi",
+			nil,
 		},
 		{
 			"public",
-			[]string{"invalid name kfj;lkdfj:"},
+			[]string{"invalid bucket"},
 			"General Kenobi",
+			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
 		},
 	}
 
@@ -99,6 +107,10 @@ func TestGet(t *testing.T) {
 
 	for _, test := range tt {
 		result, err := s.Get(test.Collection, test.Keys)
+		if test.Error != nil {
+			assert.Equal(t, test.Error, err)
+			continue
+		}
 		require.Nil(t, err)
 
 		assert.Equal(t, test.Result, string(result))
