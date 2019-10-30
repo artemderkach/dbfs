@@ -14,139 +14,6 @@ import (
 
 var DB_PATH = "/tmp/myTestDB.bolt"
 
-func TestPut(t *testing.T) {
-	s, err := initStore()
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
-	require.Nil(t, err)
-
-	file := strings.NewReader("Next Meme")
-	err = s.Put("public", "Ok, that was epic!", file)
-	require.Nil(t, err)
-
-	file = strings.NewReader("I have the highground!")
-	err = s.Put("public", "///prequel////It's over Anakin!/////", file)
-	require.Nil(t, err)
-	file = strings.NewReader("Ackbar")
-	err = s.Put("public", "/prequel/it's A trap", file)
-	require.Nil(t, err)
-
-	file = strings.NewReader("I have the highground!")
-	err = s.Put("public", "It's over Anakin!", file)
-	require.Nil(t, err)
-
-	result, err := s.View("public")
-	require.Nil(t, err)
-
-	expected := "1\n" +
-		"  2\n" +
-		"It's over Anakin!\n" +
-		"Ok, that was epic!\n" +
-		"The Ring\n" +
-		"a\n" +
-		"  b\n" +
-		"    c\n" +
-		"      Hello there\n" +
-		"prequel\n" +
-		"  It's over Anakin!\n" +
-		"  it's A trap\n"
-
-	assert.Equal(t, expected, string(result))
-}
-
-func TestGet(t *testing.T) {
-	tt := []struct {
-		Collection string
-		Keys       []string
-		Result     string
-		Error      error
-	}{
-		{
-			"public",
-			[]string{},
-			"1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n",
-			nil,
-		},
-		{
-			"public",
-			[]string{"1"},
-			"2\n",
-			nil,
-		},
-		{
-			"public",
-			[]string{"The Ring"},
-			"My precious",
-			nil,
-		},
-		{
-			"public",
-			[]string{"a", "b", "c"},
-			"Hello there\n",
-			nil,
-		},
-		{
-			"public",
-			[]string{"a", "b", "c", "Hello there"},
-			"General Kenobi",
-			nil,
-		},
-		{
-			"public",
-			[]string{"invalid bucket"},
-			"General Kenobi",
-			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
-		},
-	}
-
-	s, err := initStore()
-	require.Nil(t, err)
-	defer s.DB.Close()
-	defer s.Drop()
-	require.Nil(t, err)
-
-	for _, test := range tt {
-		result, err := s.Get(test.Collection, test.Keys)
-		if test.Error != nil {
-			assert.Equal(t, test.Error, err)
-			continue
-		}
-		require.Nil(t, err)
-
-		assert.Equal(t, test.Result, string(result))
-	}
-	// 	s, err := initStore()
-	// 	defer os.Remove(DB_PATH)
-	// 	require.Nil(t, err)
-	//
-	// 	b, err := s.Get("public", "1/2")
-	// 	require.Nil(t, err)
-	// 	assert.Equal(t, "0", string(b))
-	//
-	// 	b, err = s.Get("public", "empty")
-	// 	require.Nil(t, err)
-	// 	assert.Equal(t, "", string(b))
-}
-
-func TestDelete(t *testing.T) {
-	s, err := initStore()
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
-	require.Nil(t, err)
-
-	err = s.Delete("public", "1/2")
-	require.Nil(t, err)
-	view, err := s.View("public")
-	require.Nil(t, err)
-	assert.Equal(t, "1\nThe Ring\na\n  b\n    c\n      Hello there\n", string(view))
-
-	err = s.Delete("public", "a")
-	require.Nil(t, err)
-	view, err = s.View("public")
-	require.Nil(t, err)
-	assert.Equal(t, "1\nThe Ring\n", string(view))
-}
-
 // view of db
 // 1
 //   2
@@ -207,4 +74,185 @@ func initStore() (*Store, error) {
 		return nil
 	})
 	return s, err
+}
+
+func TestGet(t *testing.T) {
+	tt := []struct {
+		Collection string
+		Keys       []string
+		Result     string
+		Error      error
+	}{
+		{
+			"public",
+			[]string{},
+			"1\n  2\nThe Ring\na\n  b\n    c\n      Hello there\n",
+			nil,
+		},
+		{
+			"public",
+			[]string{"1"},
+			"2\n",
+			nil,
+		},
+		{
+			"public",
+			[]string{"The Ring"},
+			"My precious",
+			nil,
+		},
+		{
+			"public",
+			[]string{"a", "b", "c"},
+			"Hello there\n",
+			nil,
+		},
+		{
+			"public",
+			[]string{"a", "b", "c", "Hello there"},
+			"General Kenobi",
+			nil,
+		},
+		{
+			"public",
+			[]string{"invalid bucket"},
+			"General Kenobi",
+			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
+		},
+	}
+
+	s, err := initStore()
+	require.Nil(t, err)
+	defer s.DB.Close()
+	defer s.Drop()
+	require.Nil(t, err)
+
+	for _, test := range tt {
+		result, err := s.Get(test.Collection, test.Keys)
+		if test.Error != nil {
+			if err == nil {
+				t.Error("error should not be nil")
+				continue
+			}
+			assert.Equal(t, test.Error.Error(), err.Error())
+			continue
+		}
+		require.Nil(t, err)
+
+		assert.Equal(t, test.Result, string(result))
+	}
+}
+
+func TestPut(t *testing.T) {
+	tt := []struct {
+		Collection  string
+		Keys        []string
+		FileContent string
+		Error       error
+	}{
+		{
+			"public",
+			[]string{"Ok, that was epic!"},
+			"Next Meme",
+			nil,
+		},
+		{
+			"public",
+			[]string{"prequel", "It's over Anakin!"},
+			"I have the highground!",
+			nil,
+		},
+		{
+			"public",
+			[]string{"prequel", "It's a trap!"},
+			"Acbar",
+			nil,
+		},
+		{
+			"public",
+			[]string{"prequel"},
+			"memes",
+			errors.New("error updating database: name \"prequel\" already used"),
+		},
+		{
+			"public",
+			[]string{"The Ring", "omg this should fail"},
+			"memes",
+			errors.New("error updating database: name \"The Ring\" already used"),
+		},
+	}
+
+	s, err := initStore()
+	require.Nil(t, err)
+	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
+
+	for _, test := range tt {
+		file := strings.NewReader(test.FileContent)
+
+		err := s.Put(test.Collection, test.Keys, file)
+		if test.Error != nil {
+			if err == nil {
+				t.Error("error should not be nil")
+				continue
+			}
+			assert.Equal(t, test.Error.Error(), err.Error())
+			continue
+		}
+		require.Nil(t, err)
+	}
+
+	result, err := s.Get("public", []string{})
+	require.Nil(t, err)
+
+	expected := "1\n" +
+		"  2\n" +
+		"Ok, that was epic!\n" +
+		"The Ring\n" +
+		"a\n" +
+		"  b\n" +
+		"    c\n" +
+		"      Hello there\n" +
+		"prequel\n" +
+		"  It's a trap!\n" +
+		"  It's over Anakin!\n"
+
+	assert.Equal(t, expected, string(result))
+}
+
+func TestDelete(t *testing.T) {
+	tt := []struct {
+		Collection string
+		Keys       []string
+		Error      error
+	}{
+		{
+			"public",
+			[]string{"1", "2"},
+			nil,
+		},
+		{
+			"public",
+			[]string{"a"},
+			nil,
+		},
+	}
+
+	s, err := initStore()
+	require.Nil(t, err)
+	defer os.Remove(DB_PATH)
+	defer s.DB.Close()
+
+	for _, test := range tt {
+		err := s.Delete(test.Collection, test.Keys)
+		require.Nil(t, err)
+	}
+
+	result, err := s.Get("public", []string{})
+	require.Nil(t, err)
+
+	expected := "1\n" +
+		"The Ring\n"
+
+	assert.Equal(t, expected, string(result))
 }

@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
@@ -16,15 +15,14 @@ type Store struct {
 	DB   *bolt.DB
 }
 
-func (store *Store) Open() error {
+// Open
+func (store *Store) Open() (*bolt.DB, error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
-		return errors.Wrap(err, "error opening database")
+		return nil, errors.Wrap(err, "error opening database")
 	}
 
-	store.DB = db
-
-	return nil
+	return db, nil
 }
 
 func (store *Store) Drop() error {
@@ -37,91 +35,21 @@ func (store *Store) Drop() error {
 	return nil
 }
 
-func (store *Store) View(collection string) ([]byte, error) {
-	err := store.Open()
-	if err != nil {
-		return nil, errors.Wrap(err, "error opening database")
-	}
-	defer store.DB.Close()
-
-	var result []byte
-	err = store.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(collection))
-		if b == nil {
-			return errors.Errorf("bucket %s not exists", collection)
-		}
-		view := nestedView(b, "")
-		result = []byte(view)
-
-		return nil
-	})
-
-	return result, err
-}
-
-func (store *Store) Put(collection, path string, file io.Reader) error {
-	elements := strings.Split(path, "/")
-	filterdElements := make([]string, 0)
-	for _, element := range elements {
-		if element == "" || element == "/" {
-			continue
-		}
-		filterdElements = append(filterdElements, element)
-	}
-
-	err := store.Open()
-	if err != nil {
-		return errors.Wrap(err, "error opening database")
-	}
-	defer store.DB.Close()
-
-	err = store.DB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(collection))
-		if err != nil {
-			return errors.Wrap(err, "error opening bucket")
-		}
-
-		for i, filterdElement := range filterdElements {
-			// last element should be the file, other ones - folders
-			if i+1 != len(filterdElements) {
-				b, err = b.CreateBucketIfNotExists([]byte(filterdElement))
-				if err != nil {
-					return errors.Wrap(err, "error opening bucket")
-				}
-
-				continue
-			}
-
-			f, err := ioutil.ReadAll(file)
-			if err != nil {
-				return errors.Wrap(err, "error reading file from reader")
-			}
-			b.Put([]byte(filterdElement), f)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return errors.Wrap(err, "error updating database")
-	}
-
-	return nil
-}
-
 // Get nestedly searches for keys array, one by one, inside given collection
 // function could have 3 outcomes
 // 1. In case of last element is bucket, will return tree view of it
 // 2. In case of last element is file, will return file content
 // 3. Error either from invalid key or smth other
 func (store *Store) Get(collection string, keys []string) ([]byte, error) {
-	err := store.Open()
+	db, err := store.Open()
+
 	if err != nil {
 		return nil, errors.Wrap(err, "error opening database")
 	}
-	defer store.DB.Close()
+	defer db.Close()
 
 	var result []byte
-	err = store.DB.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
 			return errors.Wrap(err, "bucket not exists")
@@ -140,7 +68,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 			}
 			b = b.Bucket([]byte(key))
 			if b == nil {
-				return errors.Wrap(err, "bucketfjdkfj \""+key+"\" not exists")
+				return errors.Wrap(err, "bucket \""+key+"\" not exists")
 			}
 		}
 
@@ -163,7 +91,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 		}
 
 		fmt.Println("err")
-		return errors.New("bucket " + lastElem + " not exists")
+		return errors.New("bucket \"" + lastElem + "\" not exists")
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting elements from bucket")
@@ -172,32 +100,30 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 	return result, err
 }
 
-func (store *Store) Delete(collection, path string) error {
-	elements := strings.Split(path, "/")
-	filterdElements := make([]string, 0)
-	for _, element := range elements {
-		if element == "" || element == "/" {
-			continue
-		}
-		filterdElements = append(filterdElements, element)
-	}
-
-	err := store.Open()
+// Put creates bucket for each "key" passed in params, except for the last one
+// last one is used as file name
+// if only one "key" passed, file will be created in root directory
+func (store *Store) Put(collection string, keys []string, file io.Reader) error {
+	db, err := store.Open()
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
 	}
-	defer store.DB.Close()
+	defer db.Close()
 
-	err = store.DB.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(collection))
 		if err != nil {
 			return errors.Wrap(err, "error opening bucket")
 		}
-		for i, filterdElement := range filterdElements {
 
+		for i, key := range keys {
 			// last element should be the file, other ones - folders
-			if i+1 != len(filterdElements) {
-				b, err = b.CreateBucketIfNotExists([]byte(filterdElement))
+			if i+1 != len(keys) {
+				// not possible to create bucket, if this name is used for file
+				if b.Get([]byte(key)) != nil {
+					return errors.Errorf("name \"%s\" already used", key)
+				}
+				b, err = b.CreateBucketIfNotExists([]byte(key))
 				if err != nil {
 					return errors.Wrap(err, "error opening bucket")
 				}
@@ -205,18 +131,67 @@ func (store *Store) Delete(collection, path string) error {
 				continue
 			}
 
-			err := b.Delete([]byte(filterdElement))
-			if err != bolt.ErrIncompatibleValue {
-				return err
+			// last element should not exists as bucket
+			if b.Bucket([]byte(key)) != nil {
+				return errors.Errorf("name \"%s\" already used", key)
 			}
-			err = b.DeleteBucket([]byte(filterdElement))
-			return err
+
+			f, err := ioutil.ReadAll(file)
+			if err != nil {
+				return errors.Wrap(err, "error reading file from reader")
+			}
+			b.Put([]byte(key), f)
 		}
 
 		return nil
 	})
 
-	return err
+	if err != nil {
+		return errors.Wrap(err, "error updating database")
+	}
+
+	return nil
+}
+
+func (store *Store) Delete(collection string, keys []string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	db, err := store.Open()
+	if err != nil {
+		return errors.Wrap(err, "error opening database")
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(collection))
+		if b == nil {
+			return errors.Wrap(err, "bucket not exists")
+		}
+		for i, key := range keys {
+			// skip last element, it will be checked after loop
+			if i == len(keys)-1 {
+				continue
+			}
+			b = b.Bucket([]byte(key))
+			if b == nil {
+				return errors.Wrap(err, "bucket \""+key+"\" not exists")
+			}
+		}
+		lastElem := keys[len(keys)-1]
+
+		err := b.Delete([]byte(lastElem))
+		if err != bolt.ErrIncompatibleValue {
+			return err
+		}
+		err = b.DeleteBucket([]byte(lastElem))
+		return err
+	})
+	if err != nil {
+		return errors.Wrap(err, "error updating database")
+	}
+
+	return nil
 }
 
 // nestedView runs throug every bucket recursively
