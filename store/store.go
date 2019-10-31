@@ -153,6 +153,9 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 	return nil
 }
 
+// Delete removes element from database
+// in case it is a bucket, remove this bucket and all elements under this bucket
+// bucket removes recursively
 func (store *Store) Delete(collection string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
@@ -211,7 +214,3 @@ func nestedView(b *bolt.Bucket, indent string) string {
 
 	return view
 }
-
-// nestedBucket searches for nested bukcets with input string name
-// func nestedBucket(b *bolt.Bucket, []string) (*bolt.Bucket, error) {
-// }
