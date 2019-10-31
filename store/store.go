@@ -25,6 +25,7 @@ func (store *Store) Open() (*bolt.DB, error) {
 	return db, nil
 }
 
+// Drop deletes database despite it's not empty
 func (store *Store) Drop() error {
 	store.DB.Close()
 	err := os.Remove(store.Path)
