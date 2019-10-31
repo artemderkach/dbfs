@@ -10,28 +10,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	BasePath = "/db"
-)
-
 type Rest struct {
-	Store    *store.Store
-	APP_PASS string
+	Store *store.Store
 }
 
-func stripPrefix(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, BasePath)
-		next.ServeHTTP(w, r)
-	})
-}
+// func stripPrefix(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		r.URL.Path = strings.TrimPrefix(r.URL.Path, BasePath)
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
 
 func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
-	subrouter := router.PathPrefix(BasePath).Subrouter()
+	// subrouter := router.PathPrefix(BasePath).Subrouter()
 
-	subrouter.Use(stripPrefix)
-	subrouter.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
+	// subrouter.Use(stripPrefix)
+	router.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
 	// 	subrouter.PathPrefix("/").HandlerFunc(rest.put).Methods("POST")
 	// 	subrouter.PathPrefix("/").HandlerFunc(rest.delete).Methods("DELETE")
 
@@ -43,9 +38,10 @@ func sendErr(w http.ResponseWriter, err error) {
 	w.Write([]byte(err.Error()))
 }
 
-// view return the current state of database in form of tree view
-func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
-	keys := strings.Split(r.URL.Path, "/")
+// splitPath will split input string by "/"
+// olso it will filter out redundant chars
+func splitPath(path string) []string {
+	keys := strings.Split(path, "/")
 	filterdKeys := make([]string, 0)
 	// when splitting string, there could appear some garbage chars like "/" or ""
 	for _, key := range keys {
@@ -54,7 +50,13 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 		}
 		filterdKeys = append(filterdKeys, key)
 	}
-	b, err := rest.Store.Get("default", filterdKeys)
+	return filterdKeys
+}
+
+// view return the current state of database in form of tree view
+func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
+	keys := splitPath(r.URL.Path)
+	b, err := rest.Store.Get("default", keys)
 	if err != nil {
 		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
 		return

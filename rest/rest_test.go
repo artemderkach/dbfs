@@ -20,8 +20,8 @@ func TestView(t *testing.T) {
 		Path         string
 		ResponseBody string
 	}{
-		{BasePath, "Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n"},
-		{BasePath + "/must", "have\n  been\n    like\n"},
+		{"/", "Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n"},
+		{"/" + "/must", "have\n  been\n    like\n"},
 	}
 
 	r, err := getRest()
@@ -163,8 +163,7 @@ func getRest() (*Rest, error) {
 		return nil, err
 	}
 	r := &Rest{
-		Store:    s,
-		APP_PASS: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+		Store: s,
 	}
 	return r, nil
 }
@@ -174,25 +173,25 @@ func getStore() (*store.Store, error) {
 		Path: "/tmp/db123",
 	}
 	r := strings.NewReader("42")
-	err := s.Put("default", "answer", r)
+	err := s.Put("default", []string{"answer"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The One")
-	err = s.Put("default", "Neo", r)
+	err = s.Put("default", []string{"Neo"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The Boys")
-	err = s.Put("default", "/me/and", r)
+	err = s.Put("default", []string{"me", "and"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("blinking guy")
-	err = s.Put("default", "/must/have/been/like", r)
+	err = s.Put("default", []string{"must", "have", "been", "like"}, r)
 	if err != nil {
 		return nil, err
 	}
