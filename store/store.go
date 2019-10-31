@@ -16,7 +16,7 @@ type Store struct {
 }
 
 // Open
-func (store *Store) Open() (*bolt.DB, error) {
+func (store *Store) open() (*bolt.DB, error) {
 	db, err := bolt.Open(store.Path, 0600, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "error opening database")
@@ -42,8 +42,7 @@ func (store *Store) Drop() error {
 // 2. In case of last element is file, will return file content
 // 3. Error either from invalid key or smth other
 func (store *Store) Get(collection string, keys []string) ([]byte, error) {
-	db, err := store.Open()
-
+	db, err := store.open()
 	if err != nil {
 		return nil, errors.Wrap(err, "error opening database")
 	}
@@ -105,7 +104,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 // last one is used as file name
 // if only one "key" passed, file will be created in root directory
 func (store *Store) Put(collection string, keys []string, file io.Reader) error {
-	db, err := store.Open()
+	db, err := store.open()
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
 	}
@@ -161,7 +160,7 @@ func (store *Store) Delete(collection string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
 	}
-	db, err := store.Open()
+	db, err := store.open()
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
 	}
