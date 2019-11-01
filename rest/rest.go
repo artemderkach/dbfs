@@ -56,9 +56,35 @@ func splitPath(path string) []string {
 // view return the current state of database in form of tree view
 func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
-	b, err := rest.Store.Get("default", keys)
+	b, err := rest.Store.Get("public", keys)
 	if err != nil {
 		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
+		return
+	}
+	w.Write(b)
+}
+
+// put creates new record in database. Returns state of database after write
+// Take "multipart/form-data" request with "file" key
+func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
+	keys := splitPath(r.URL.Path)
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		rest.sendErr(errors.Wrap(err, "error parsing FormFile"))
+		return
+	}
+
+	keys = append(keys, header.Filename)
+	err = rest.Store.Put("public", keys, file)
+	if err != nil {
+		rest.sendErr(errors.Wrap(err, "error writing file to storage"))
+		return
+	}
+
+	b, err := rest.Store.View("public")
+	if err != nil {
+		rest.sendErr(errors.Wrap(err, "error retrieving view data from database"))
 		return
 	}
 	w.Write(b)
@@ -141,43 +167,6 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 // 		err = errors.Wrap(err, "error retrieving file data from database")
 // 		fmt.Println(err)
 // 		w.Write([]byte(err.Error()))
-// 		return
-// 	}
-// 	w.Write(b)
-// }
-
-// put creates new record in database. Returns state of database after write
-// Take "multipart/form-data" request with "file" key
-// func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-//
-// 	collection := vars["collection"]
-// 	err := validateCollection(collection)
-// 	if err != nil {
-// 		rest.sendErr(errors.Wrap(err, "invalid collection parameter"))
-// 		return
-// 	} // // 	reg, err := regexp.Compile("/" + collection)
-// 	if err != nil {
-// 		rest.sendErr(errors.Wrap(err, "error compiling regexp"))
-// 		return
-// 	}
-// 	path := reg.ReplaceAllString(r.URL.Path, "")
-//
-// 	file, header, err := r.FormFile("file")
-// 	if err != nil {
-// 		rest.sendErr(errors.Wrap(err, "error parsing FormFile"))
-// 		return
-// 	}
-//
-// 	err = rest.Store.Put(collection, path+"/"+header.Filename, file)
-// 	if err != nil {
-// 		rest.sendErr(errors.Wrap(err, "error writing file to storage"))
-// 		return
-// 	}
-//
-// 	b, err := rest.Store.View(collection)
-// 	if err != nil {
-// 		rest.sendErr(errors.Wrap(err, "error retrieving view data from database"))
 // 		return
 // 	}
 // 	w.Write(b)

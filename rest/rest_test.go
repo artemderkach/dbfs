@@ -20,8 +20,22 @@ func TestView(t *testing.T) {
 		Path         string
 		ResponseBody string
 	}{
-		{"/", "Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n"},
-		{"/" + "/must", "have\n  been\n    like\n"},
+		{
+			"/",
+			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+		},
+		{
+			"/must",
+			"have\n  been\n    like\n",
+		},
+		{
+			"/answer",
+			"42",
+		},
+		{
+			"/invalid",
+			"error retrieving view data from database: error getting elements from bucket: bucket \"invalid\" not exists",
+		},
 	}
 
 	r, err := getRest()
@@ -37,12 +51,12 @@ func TestView(t *testing.T) {
 
 		msg, err := ioutil.ReadAll(resp.Body)
 		require.Nil(t, err)
+
 		assert.Equal(t, test.ResponseBody, string(msg))
 	}
 }
 
 func TestPut(t *testing.T) {
-	URL := "/public"
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -173,25 +187,25 @@ func getStore() (*store.Store, error) {
 		Path: "/tmp/db123",
 	}
 	r := strings.NewReader("42")
-	err := s.Put("default", []string{"answer"}, r)
+	err := s.Put("public", []string{"answer"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The One")
-	err = s.Put("default", []string{"Neo"}, r)
+	err = s.Put("public", []string{"Neo"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The Boys")
-	err = s.Put("default", []string{"me", "and"}, r)
+	err = s.Put("public", []string{"me", "and"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("blinking guy")
-	err = s.Put("default", []string{"must", "have", "been", "like"}, r)
+	err = s.Put("public", []string{"must", "have", "been", "like"}, r)
 	if err != nil {
 		return nil, err
 	}

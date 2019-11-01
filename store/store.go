@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -27,7 +26,6 @@ func (store *Store) open() (*bolt.DB, error) {
 
 // Drop deletes database despite it's not empty
 func (store *Store) Drop() error {
-	store.DB.Close()
 	err := os.Remove(store.Path)
 	if err != nil {
 		return errors.Wrap(err, "error dropping database")
@@ -77,20 +75,17 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		// if the last element is bucket
 		if b.Bucket([]byte(lastElem)) != nil {
-			fmt.Println("bucket")
 			result = []byte(nestedView(b.Bucket([]byte(lastElem)), ""))
 			return nil
 		}
 		// if the last element is file
 		v := b.Get([]byte(lastElem))
 		if v != nil {
-			fmt.Println("file")
 			result = make([]byte, len(v))
 			copy(result, v)
 			return nil
 		}
 
-		fmt.Println("err")
 		return errors.New("bucket \"" + lastElem + "\" not exists")
 	})
 	if err != nil {
@@ -103,6 +98,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 // Put creates bucket for each "key" passed in params, except for the last one
 // last one is used as file name
 // if only one "key" passed, file will be created in root directory
+// this function cannot create bucket without file, so reader is required
 func (store *Store) Put(collection string, keys []string, file io.Reader) error {
 	db, err := store.open()
 	if err != nil {
