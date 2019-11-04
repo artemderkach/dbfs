@@ -27,7 +27,7 @@ func (rest *Rest) Router() *mux.Router {
 
 	// subrouter.Use(stripPrefix)
 	router.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
-	// 	subrouter.PathPrefix("/").HandlerFunc(rest.put).Methods("POST")
+	router.PathPrefix("").HandlerFunc(rest.put).Methods("POST")
 	// 	subrouter.PathPrefix("/").HandlerFunc(rest.delete).Methods("DELETE")
 
 	return router
@@ -69,22 +69,15 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
 
-	file, header, err := r.FormFile("file")
+	err := rest.Store.Put("public", keys, r.Body)
 	if err != nil {
-		rest.sendErr(errors.Wrap(err, "error parsing FormFile"))
+		sendErr(w, errors.Wrap(err, "error writing file to storage"))
 		return
 	}
 
-	keys = append(keys, header.Filename)
-	err = rest.Store.Put("public", keys, file)
+	b, err := rest.Store.Get("public", []string{})
 	if err != nil {
-		rest.sendErr(errors.Wrap(err, "error writing file to storage"))
-		return
-	}
-
-	b, err := rest.Store.View("public")
-	if err != nil {
-		rest.sendErr(errors.Wrap(err, "error retrieving view data from database"))
+		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
 		return
 	}
 	w.Write(b)

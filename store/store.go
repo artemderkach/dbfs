@@ -11,7 +11,6 @@ import (
 
 type Store struct {
 	Path string
-	DB   *bolt.DB
 }
 
 // Open

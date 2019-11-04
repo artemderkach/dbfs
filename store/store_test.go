@@ -1,7 +1,6 @@
 package store
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -30,7 +29,6 @@ func initStore() (*Store, error) {
 	defer db.Close()
 	s := &Store{
 		Path: DB_PATH,
-		DB:   db,
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -123,7 +121,6 @@ func TestGet(t *testing.T) {
 
 	s, err := initStore()
 	require.Nil(t, err)
-	defer s.DB.Close()
 	defer s.Drop()
 	require.Nil(t, err)
 
@@ -184,8 +181,7 @@ func TestPut(t *testing.T) {
 
 	s, err := initStore()
 	require.Nil(t, err)
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
+	defer s.Drop()
 
 	for _, test := range tt {
 		file := strings.NewReader(test.FileContent)
@@ -240,8 +236,7 @@ func TestDelete(t *testing.T) {
 
 	s, err := initStore()
 	require.Nil(t, err)
-	defer os.Remove(DB_PATH)
-	defer s.DB.Close()
+	defer s.Drop()
 
 	for _, test := range tt {
 		err := s.Delete(test.Collection, test.Keys)

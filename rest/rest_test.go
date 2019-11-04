@@ -1,10 +1,7 @@
 package rest
 
 import (
-	"bytes"
-	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -20,6 +17,10 @@ func TestView(t *testing.T) {
 		Path         string
 		ResponseBody string
 	}{
+		{
+			"",
+			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+		},
 		{
 			"/",
 			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
@@ -57,6 +58,23 @@ func TestView(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
+	tt := []struct {
+		Path         string
+		FileContent  string
+		ResponseBody string
+	}{
+		{
+			"/new",
+			"data",
+			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\nnew\n",
+		},
+		{
+			"/must",
+			"some more data",
+			"error writing file to storage: error updating database: name \"must\" already used",
+		},
+	}
+
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -64,48 +82,18 @@ func TestPut(t *testing.T) {
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
-	file := strings.NewReader("Content")
-	body, header, err := multipartFile("file", "file", file)
-	require.Nil(t, err)
+	for _, test := range tt {
+		file := strings.NewReader(test.FileContent)
+		require.Nil(t, err)
 
-	resp, err := http.Post(ts.URL+URL, header, body)
-	require.Nil(t, err)
+		resp, err := http.Post(ts.URL+test.Path, "application/octet-stream", file)
+		require.Nil(t, err)
 
-	view, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
+		msg, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
 
-	assert.Equal(t, "Neo\nanswer\nfile\nme\n  and\n", string(view))
-
-	URL = "/public/me/epic/files/"
-
-	file = strings.NewReader("Ok, that was epic!\n")
-	body, header, err = multipartFile("file", "filename.txt", file)
-	require.Nil(t, err)
-
-	resp, err = http.Post(ts.URL+URL, header, body)
-	require.Nil(t, err)
-
-	view, err = ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-
-	assert.Equal(t, "Neo\nanswer\nfile\nme\n  and\n  epic\n    files\n      filename.txt\n", string(view))
-}
-
-func TestGet(t *testing.T) {
-	URL := "/public/download/answer"
-	r, err := getRest()
-	require.Nil(t, err)
-	defer r.Store.Drop()
-
-	ts := httptest.NewServer(r.Router())
-	defer ts.Close()
-
-	resp, err := http.Get(ts.URL + URL)
-	require.Nil(t, err)
-
-	msg, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "42", string(msg))
+		assert.Equal(t, test.ResponseBody, string(msg))
+	}
 }
 
 func TestDelete(t *testing.T) {
@@ -216,21 +204,4 @@ func getStore() (*store.Store, error) {
 	// }
 
 	return s, nil
-}
-
-func multipartFile(keyName string, fileName string, file io.Reader) (io.Reader, string, error) {
-	body := &bytes.Buffer{}
-
-	writer := multipart.NewWriter(body)
-	defer writer.Close()
-	part, err := writer.CreateFormFile(keyName, fileName)
-	if err != nil {
-		return nil, "", err
-	}
-	_, err = io.Copy(part, file)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return body, writer.FormDataContentType(), nil
 }
