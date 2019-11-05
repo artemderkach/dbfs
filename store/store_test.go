@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -116,13 +115,13 @@ func TestGet(t *testing.T) {
 			"public",
 			[]string{"invalid bucket"},
 			"General Kenobi",
-			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
+			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not found"),
 		},
 		{
 			"public",
 			[]string{"a", "b", "invalid file"},
 			"General Kenobi",
-			errors.New("error getting elements from bucket: bucket \"invalid file\" not exists"),
+			errors.New("error getting elements from bucket: bucket \"invalid file\" not found"),
 		},
 	}
 
@@ -229,25 +228,25 @@ func TestDelete(t *testing.T) {
 		Keys       []string
 		Error      error
 	}{
-		//		{
-		//			"public",
-		//			[]string{"1", "2"},
-		//			nil,
-		//		},
-		//		{
-		//			"public",
-		//			[]string{"a"},
-		//			nil,
-		//		},
-		//		{
-		//			"public",
-		//			[]string{"invalid key"},
-		//			errors.New("error updating database: bucket not found"),
-		//		},
+		{
+			"public",
+			[]string{"1", "2"},
+			nil,
+		},
+		{
+			"public",
+			[]string{"a"},
+			nil,
+		},
+		{
+			"public",
+			[]string{"invalid key"},
+			errors.New("error updating database: bucket not found"),
+		},
 		{
 			"public",
 			[]string{"The Ring", "invalid key"},
-			errors.New("error updating database: bucket not found"),
+			errors.New("error updating database: bucket \"The Ring\" not found"),
 		},
 	}
 
@@ -259,8 +258,6 @@ func TestDelete(t *testing.T) {
 		err := s.Delete(test.Collection, test.Keys)
 
 		if test.Error != nil {
-
-			fmt.Println("----", err)
 			if err == nil {
 				t.Error("error should not be nil")
 				continue

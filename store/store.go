@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -50,7 +49,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
-			return errors.Wrap(err, "bucket not exists")
+			return errors.Errorf("bucket not exists")
 		}
 
 		// handle case for top level bucket
@@ -63,7 +62,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 		for i := 0; i < len(keys)-1; i += 1 {
 			b = b.Bucket([]byte(keys[i]))
 			if b == nil {
-				return errors.Wrap(err, "bucket \""+keys[i]+"\" not exists")
+				return errors.Errorf("bucket \"%s\" not found", keys[i])
 			}
 		}
 
@@ -83,7 +82,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 			return nil
 		}
 
-		return errors.New("bucket \"" + lastElem + "\" not exists")
+		return errors.Errorf("bucket \"%s\" not found", lastElem)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting elements from bucket")
@@ -99,7 +98,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 func (store *Store) Put(collection string, keys []string, file io.Reader) error {
 	db, err := store.open()
 	if err != nil {
-		return errors.Wrap(err, "error opening database")
+		return errors.New("error opening database")
 	}
 	defer db.Close()
 
@@ -150,7 +149,7 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 // bucket removes recursively
 func (store *Store) Delete(collection string, keys []string) error {
 	if len(keys) == 0 {
-		return nil
+		return errors.New("empty delete request")
 	}
 	db, err := store.open()
 	if err != nil {
@@ -161,34 +160,29 @@ func (store *Store) Delete(collection string, keys []string) error {
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
-			return errors.Wrap(err, "bucket not exists")
+			return errors.Errorf("bucket \"%s\" not found", collection)
 		}
 		// skip last element, it will be checked after loop
 		for i := 0; i < len(keys)-1; i += 1 {
 			b = b.Bucket([]byte(keys[i]))
 			if b == nil {
-				return errors.Wrap(err, "bucket \""+keys[i]+"\" not exists")
+				return errors.Errorf("bucket \"%s\" not found", keys[i])
 			}
 
 		}
 		lastElem := keys[len(keys)-1]
-		fmt.Println("lastElement:", lastElem)
 
 		if b.Get([]byte(lastElem)) != nil {
 			return b.Delete([]byte(lastElem))
 		}
 
 		err := b.DeleteBucket([]byte(lastElem))
-		fmt.Println("err:", err)
 		if err != nil && err != bolt.ErrIncompatibleValue {
-			fmt.Println("err2:", err)
 			return err
 		}
-		fmt.Println("++++")
 
 		return nil
 	})
-	fmt.Println("err3:", err)
 	if err != nil {
 		return errors.Wrap(err, "error updating database")
 	}
