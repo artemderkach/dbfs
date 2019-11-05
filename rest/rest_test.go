@@ -35,7 +35,7 @@ func TestView(t *testing.T) {
 		},
 		{
 			"/invalid",
-			"error retrieving view data from database: error getting elements from bucket: bucket \"invalid\" not exists",
+			"error retrieving view data from database: error getting elements from bucket: bucket \"invalid\" not found",
 		},
 	}
 
@@ -102,8 +102,12 @@ func TestDelete(t *testing.T) {
 		ResponseBody string
 	}{
 		{
-			"/must/hame",
-			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+			"/must/have",
+			"Neo\nanswer\nme\n  and\nmust\n",
+		},
+		{
+			"/must/have",
+			"error deleting file from database: error updating database: bucket not found",
 		},
 	}
 

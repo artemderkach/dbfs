@@ -28,7 +28,7 @@ func (rest *Rest) Router() *mux.Router {
 	// subrouter.Use(stripPrefix)
 	router.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
 	router.PathPrefix("").HandlerFunc(rest.put).Methods("POST")
-	router.PathPrefix("").HandlerFunc(rest.put).Methods("DELETE")
+	router.PathPrefix("").HandlerFunc(rest.delete).Methods("DELETE")
 
 	return router
 }
@@ -108,37 +108,6 @@ func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 }
-
-// dowload returns the value for filename
-// func (rest *Rest) download(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-// 	reg, err := regexp.Compile("^.+download")
-// 	if err != nil {
-// 		err = errors.Wrap(err, "error parsing regexp")
-// 		fmt.Println(err)
-// 		w.Write([]byte(err.Error()))
-// 		return
-// 	}
-// 	path := reg.ReplaceAllString(r.URL.Path, "")
-//
-// 	collection := vars["collection"]
-// 	err = validateCollection(collection)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "invalid collection parameter")
-// 		fmt.Println(err)
-// 		w.Write([]byte(err.Error()))
-// 		return
-// 	}
-//
-// 	b, err := rest.Store.Get(collection, path)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "error retrieving file data from database")
-// 		fmt.Println(err)
-// 		w.Write([]byte(err.Error()))
-// 		return
-// 	}
-// 	w.Write(b)
-// }
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello from DBFS"))
