@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -168,16 +169,26 @@ func (store *Store) Delete(collection string, keys []string) error {
 			if b == nil {
 				return errors.Wrap(err, "bucket \""+keys[i]+"\" not exists")
 			}
+
 		}
 		lastElem := keys[len(keys)-1]
+		fmt.Println("lastElement:", lastElem)
 
-		err := b.Delete([]byte(lastElem))
-		if err != bolt.ErrIncompatibleValue {
+		if b.Get([]byte(lastElem)) != nil {
+			return b.Delete([]byte(lastElem))
+		}
+
+		err := b.DeleteBucket([]byte(lastElem))
+		fmt.Println("err:", err)
+		if err != nil && err != bolt.ErrIncompatibleValue {
+			fmt.Println("err2:", err)
 			return err
 		}
-		err = b.DeleteBucket([]byte(lastElem))
-		return err
+		fmt.Println("++++")
+
+		return nil
 	})
+	fmt.Println("err3:", err)
 	if err != nil {
 		return errors.Wrap(err, "error updating database")
 	}
