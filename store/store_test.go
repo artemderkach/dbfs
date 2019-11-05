@@ -117,6 +117,12 @@ func TestGet(t *testing.T) {
 			"General Kenobi",
 			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
 		},
+		{
+			"public",
+			[]string{"a", "b", "invalid file"},
+			"General Kenobi",
+			errors.New("error getting elements from bucket: bucket \"invalid bucket\" not exists"),
+		},
 	}
 
 	s, err := initStore()
@@ -232,6 +238,11 @@ func TestDelete(t *testing.T) {
 			[]string{"a"},
 			nil,
 		},
+		{
+			"public",
+			[]string{"invalid key"},
+			errors.New("error"),
+		},
 	}
 
 	s, err := initStore()
@@ -241,6 +252,15 @@ func TestDelete(t *testing.T) {
 	for _, test := range tt {
 		err := s.Delete(test.Collection, test.Keys)
 		require.Nil(t, err)
+
+		if test.Error != nil {
+			if err == nil {
+				t.Error("error should no be nil")
+				continue
+			}
+			assert.Equal(t, test.Error.Error(), err.Error())
+		}
+
 	}
 
 	result, err := s.Get("public", []string{})

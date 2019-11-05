@@ -97,7 +97,16 @@ func TestPut(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	URL := "/public/answer"
+	tt := []struct {
+		Path         string
+		ResponseBody string
+	}{
+		{
+			"/must/hame",
+			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+		},
+	}
+
 	r, err := getRest()
 	require.Nil(t, err)
 	defer r.Store.Drop()
@@ -105,16 +114,20 @@ func TestDelete(t *testing.T) {
 	ts := httptest.NewServer(r.Router())
 	defer ts.Close()
 
-	client := &http.Client{}
+	for _, test := range tt {
 
-	req, err := http.NewRequest(http.MethodDelete, ts.URL+URL, nil)
-	resp, err := client.Do(req)
+		client := &http.Client{}
+		req, err := http.NewRequest(http.MethodDelete, ts.URL+test.Path, nil)
+		require.Nil(t, err)
 
-	require.Nil(t, err)
+		resp, err := client.Do(req)
+		require.Nil(t, err)
 
-	msg, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "Neo\nme\n  and\n", string(msg))
+		msg, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		assert.Equal(t, test.ResponseBody, string(msg))
+	}
 }
 
 // func TestPrivate(t *testing.T) {

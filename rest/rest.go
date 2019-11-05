@@ -28,13 +28,13 @@ func (rest *Rest) Router() *mux.Router {
 	// subrouter.Use(stripPrefix)
 	router.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
 	router.PathPrefix("").HandlerFunc(rest.put).Methods("POST")
-	// 	subrouter.PathPrefix("/").HandlerFunc(rest.delete).Methods("DELETE")
+	router.PathPrefix("").HandlerFunc(rest.put).Methods("DELETE")
 
 	return router
 }
 
 func sendErr(w http.ResponseWriter, err error) {
-	log.Print(err)
+	log.Println(err)
 	w.Write([]byte(err.Error()))
 }
 
@@ -61,7 +61,9 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
 		return
 	}
-	w.Write(b)
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
 }
 
 // put creates new record in database. Returns state of database after write
@@ -75,64 +77,37 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := rest.Store.Get("public", []string{})
+	b, err := rest.Store.Get("public", nil)
 	if err != nil {
 		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
 		return
 	}
-	w.Write(b)
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
 }
 
 // delete removes value from database
 // returnes current state of tree (GET / route)
-// func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
-// 	vars := mux.Vars(r)
-//
-// 	collection := vars["collection"]
-// 	err := validateCollection(collection)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "invalid collection parameter")
-// 		fmt.Println(err)
-// 		if _, err = w.Write([]byte(err.Error())); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 		return
-// 	}
-//
-// 	reg, err := regexp.Compile("/" + collection)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "error parsing regexp")
-// 		fmt.Println(err)
-// 		if _, err = w.Write([]byte(err.Error())); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 		return
-// 	}
-// 	path := reg.ReplaceAllString(r.URL.Path, "")
-//
-// 	err = rest.Store.Delete(collection, path)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "error deleting file from database")
-// 		fmt.Println(err)
-// 		if _, err = w.Write([]byte(err.Error())); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 		return
-// 	}
-//
-// 	b, err := rest.Store.View(collection)
-// 	if err != nil {
-// 		err = errors.Wrap(err, "error retrieving view data from database")
-// 		fmt.Println(err)
-// 		if _, err = w.Write([]byte(err.Error())); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 		return
-// 	}
-// 	if _, err = w.Write(b); err != nil {
-// 		fmt.Println(err)
-// 	}
-// }
+func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
+	keys := splitPath(r.URL.Path)
+
+	err := rest.Store.Delete("public", keys)
+	if err != nil {
+		sendErr(w, errors.Wrap(err, "error deleting file from database"))
+		return
+	}
+
+	b, err := rest.Store.Get("public", nil)
+	if err != nil {
+		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
+		return
+	}
+
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
+}
 
 // dowload returns the value for filename
 // func (rest *Rest) download(w http.ResponseWriter, r *http.Request) {

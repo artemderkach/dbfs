@@ -58,14 +58,11 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 			return nil
 		}
 
-		for i, key := range keys {
-			// skip last element, it will be checked after loop
-			if i == len(keys)-1 {
-				continue
-			}
-			b = b.Bucket([]byte(key))
+		// skip last element, it will be checked after loop
+		for i := 0; i < len(keys)-1; i += 1 {
+			b = b.Bucket([]byte(keys[i]))
 			if b == nil {
-				return errors.Wrap(err, "bucket \""+key+"\" not exists")
+				return errors.Wrap(err, "bucket \""+keys[i]+"\" not exists")
 			}
 		}
 
@@ -111,32 +108,31 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 			return errors.Wrap(err, "error opening bucket")
 		}
 
-		for i, key := range keys {
-			// last element should be the file, other ones - folders
-			if i+1 != len(keys) {
-				// not possible to create bucket, if this name is used for file
-				if b.Get([]byte(key)) != nil {
-					return errors.Errorf("name \"%s\" already used", key)
-				}
-				b, err = b.CreateBucketIfNotExists([]byte(key))
-				if err != nil {
-					return errors.Wrap(err, "error opening bucket")
-				}
-
-				continue
+		// skip last element, it will be checked after loop
+		// last element should be the file, other ones - folders
+		for i := 0; i < len(keys)-1; i += 1 {
+			// not possible to create bucket, if this name is used for file
+			if b.Get([]byte(keys[i])) != nil {
+				return errors.Errorf("name \"%s\" already used", keys[i])
 			}
-
-			// last element should not exists as bucket
-			if b.Bucket([]byte(key)) != nil {
-				return errors.Errorf("name \"%s\" already used", key)
-			}
-
-			f, err := ioutil.ReadAll(file)
+			b, err = b.CreateBucketIfNotExists([]byte(keys[i]))
 			if err != nil {
-				return errors.Wrap(err, "error reading file from reader")
+				return errors.Wrap(err, "error opening bucket")
 			}
-			b.Put([]byte(key), f)
 		}
+
+		lastElem := keys[len(keys)-1]
+
+		// last element should not exists as bucket
+		if b.Bucket([]byte(lastElem)) != nil {
+			return errors.Errorf("name \"%s\" already used", lastElem)
+		}
+
+		f, err := ioutil.ReadAll(file)
+		if err != nil {
+			return errors.Wrap(err, "error reading file from reader")
+		}
+		b.Put([]byte(lastElem), f)
 
 		return nil
 	})
@@ -166,14 +162,11 @@ func (store *Store) Delete(collection string, keys []string) error {
 		if b == nil {
 			return errors.Wrap(err, "bucket not exists")
 		}
-		for i, key := range keys {
-			// skip last element, it will be checked after loop
-			if i == len(keys)-1 {
-				continue
-			}
-			b = b.Bucket([]byte(key))
+		// skip last element, it will be checked after loop
+		for i := 0; i < len(keys)-1; i += 1 {
+			b = b.Bucket([]byte(keys[i]))
 			if b == nil {
-				return errors.Wrap(err, "bucket \""+key+"\" not exists")
+				return errors.Wrap(err, "bucket \""+keys[i]+"\" not exists")
 			}
 		}
 		lastElem := keys[len(keys)-1]
