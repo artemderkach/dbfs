@@ -28,9 +28,8 @@ func main() {
 		Rest: &rest.Rest{
 			Store: &store.Store{
 				Path: env.DB_PATH,
-				DB:   nil,
 			},
-			APP_PASS: env.APP_PASS,
+			// APP_PASS: env.APP_PASS,
 		},
 		Env: env,
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"syscall"
 	"testing"
@@ -12,8 +11,9 @@ import (
 )
 
 func TestMain(t *testing.T) {
+	// kill current process after 1 second
 	go func() {
-		time.Sleep(2000 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		e := syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 		require.Nil(t, e)
 	}()
@@ -22,13 +22,12 @@ func TestMain(t *testing.T) {
 		main()
 	}()
 
-	time.Sleep(1000 * time.Millisecond)
+	// give service .5 seconds to start
+	time.Sleep(500 * time.Millisecond)
 
 	resp, err := http.Get("http://localhost:8080")
 	require.Nil(t, err)
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	require.Nil(t, err)
-	assert.Equal(t, "Hello from DBFS", string(body))
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
