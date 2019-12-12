@@ -4,63 +4,38 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/caarlos0/env/v6"
+	"github.com/mind-rot/dbfs/email"
 	"github.com/mind-rot/dbfs/rest"
 	"github.com/mind-rot/dbfs/store"
 	"github.com/pkg/errors"
 )
 
-type App struct {
-	Rest *rest.Rest
-	Env  *Env
-}
-
-type Env struct {
-	APP_PORT string
-	DB_PATH  string
-	APP_PASS string
+type Config struct {
+	APP_PORT        string `env:"APP_PORT" envDefault:"8080"`
+	DB_PATH         string `env:"DB_PATH" envDefault:"/tmp/mydb.bolt"`
+	MAILGUN_API_KEY string `env:"MAILGUN_API_KEY" envDefault:""`
+	MAILGUN_DOMAIN  string `env:"MAILGUN_DOMAIN" envDefault:""`
 }
 
 func main() {
-	env := parseEnv()
-	app := &App{
-		Rest: &rest.Rest{
-			Store: &store.Store{
-				Path: env.DB_PATH,
-			},
-			// APP_PASS: env.APP_PASS,
-		},
-		Env: env,
+	config := &Config{}
+	if err := env.Parse(config); err != nil {
+		err = errors.Wrap(err, "error parsing environment variables")
+		log.Fatal(err)
 	}
 
-	fmt.Println("starting dbfs on localhost:" + env.APP_PORT)
-	err := http.ListenAndServe(":"+env.APP_PORT, app.Rest.Router())
+	r := &rest.Rest{
+		Store: &store.Store{
+			Path: config.DB_PATH,
+		},
+		Email: email.New(config.MAILGUN_API_KEY, config.MAILGUN_DOMAIN),
+	}
+
+	fmt.Println("starting dbfs on localhost:" + config.APP_PORT)
+	err := http.ListenAndServe(":"+config.APP_PORT, r.Router())
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "error starting dbfs server"))
 	}
-}
-
-func parseEnv() *Env {
-	env := &Env{}
-
-	port, exists := os.LookupEnv("APP_PORT")
-	if !exists {
-		port = "8080"
-	}
-	env.APP_PORT = port
-
-	dbPath, exists := os.LookupEnv("DB_PATH")
-	if !exists {
-		dbPath = "/tmp/mydb.bolt"
-	}
-	env.DB_PATH = dbPath
-
-	pass, exists := os.LookupEnv("APP_PASS")
-	if !exists {
-		dbPath = ""
-	}
-	env.APP_PASS = pass
-
-	return env
 }

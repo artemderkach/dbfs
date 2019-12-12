@@ -1,15 +1,29 @@
 # github.com/boltdb/bolt v1.3.1
 github.com/boltdb/bolt
-# github.com/davecgh/go-spew v1.1.0
+# github.com/caarlos0/env/v6 v6.1.0
+github.com/caarlos0/env/v6
+# github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/go-chi/chi v4.0.0+incompatible
+github.com/go-chi/chi
 # github.com/gorilla/mux v1.7.3
 github.com/gorilla/mux
+# github.com/mailgun/mailgun-go/v3 v3.6.3
+github.com/mailgun/mailgun-go/v3
+github.com/mailgun/mailgun-go/v3/events
+# github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
+github.com/mailru/easyjson
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # golang.org/x/sys v0.0.0-20190621203818-d432491b9138
 golang.org/x/sys/unix
+# gopkg.in/yaml.v2 v2.2.2
+gopkg.in/yaml.v2

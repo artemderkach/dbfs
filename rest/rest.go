@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/mind-rot/dbfs/email"
 	"github.com/mind-rot/dbfs/store"
 	"github.com/pkg/errors"
 )
 
 type Rest struct {
 	Store *store.Store
+	Email *email.Email
 }
 
 // func stripPrefix(next http.Handler) http.Handler {
@@ -21,6 +23,7 @@ type Rest struct {
 // 	})
 // }
 
+// Router creates router instance with mapped routes
 func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
 	// subrouter := router.PathPrefix(BasePath).Subrouter()
