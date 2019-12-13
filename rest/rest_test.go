@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"path"
 	"strings"
 	"testing"
 
@@ -47,7 +49,10 @@ func TestView(t *testing.T) {
 	defer ts.Close()
 
 	for _, test := range tt {
-		resp, err := http.Get(ts.URL + test.Path)
+		u, err := url.Parse(ts.URL)
+		u.Path = path.Join(u.Path, basePath, test.Path)
+
+		resp, err := http.Get(u.String())
 		require.Nil(t, err)
 
 		msg, err := ioutil.ReadAll(resp.Body)
@@ -86,7 +91,10 @@ func TestPut(t *testing.T) {
 		file := strings.NewReader(test.FileContent)
 		require.Nil(t, err)
 
-		resp, err := http.Post(ts.URL+test.Path, "application/octet-stream", file)
+		u, err := url.Parse(ts.URL)
+		u.Path = path.Join(u.Path, basePath, test.Path)
+
+		resp, err := http.Post(u.String(), "application/octet-stream", file)
 		require.Nil(t, err)
 
 		msg, err := ioutil.ReadAll(resp.Body)
@@ -119,9 +127,11 @@ func TestDelete(t *testing.T) {
 	defer ts.Close()
 
 	for _, test := range tt {
+		u, err := url.Parse(ts.URL)
+		u.Path = path.Join(u.Path, basePath, test.Path)
 
 		client := &http.Client{}
-		req, err := http.NewRequest(http.MethodDelete, ts.URL+test.Path, nil)
+		req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 		require.Nil(t, err)
 
 		resp, err := client.Do(req)
