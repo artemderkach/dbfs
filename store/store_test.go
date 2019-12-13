@@ -275,3 +275,26 @@ func TestDelete(t *testing.T) {
 
 	assert.Equal(t, expected, string(result))
 }
+
+func TestCreate(t *testing.T) {
+	tt := []struct {
+		Collection string
+		Result     string
+	}{
+		{"asdfasdf", ""},
+	}
+
+	s, err := initStore()
+	require.Nil(t, err)
+	defer s.Drop()
+
+	for _, test := range tt {
+		err := s.Create(test.Collection)
+		require.Nil(t, err)
+
+		result, err := s.Get(test.Collection, []string{})
+		require.Nil(t, err)
+
+		assert.Equal(t, test.Result, string(result))
+	}
+}

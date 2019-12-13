@@ -1,6 +1,9 @@
 package rest
 
 import (
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -119,8 +122,37 @@ func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type registerRequest struct {
+	Email string `json:"email"`
+}
+
 // register creates token for user
 func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
+	req := &registerRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		sendErr(w, err)
+		return
+	}
+
+	// generate token
+	b := make([]byte, 64)
+	rand.Read(b)
+	token := fmt.Sprintf("%x", b)
+
+	err = rest.Store.Create(token)
+	if err != nil {
+		sendErr(w, err)
+		return
+	}
+
+	_, err = rest.Email.Send(req.Email, token)
+	if err != nil {
+		sendErr(w, err)
+		return
+	}
+
 	w.Write([]byte("register"))
 }
 

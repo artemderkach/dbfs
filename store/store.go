@@ -190,6 +190,29 @@ func (store *Store) Delete(collection string, keys []string) error {
 	return nil
 }
 
+// Create creates bucket for new user
+func (store *Store) Create(collection string) error {
+	db, err := store.open()
+	if err != nil {
+		return errors.Wrap(err, "error openiong database")
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucket([]byte(collection))
+		if err != nil {
+			return errors.Wrap(err, "error creating bucket")
+		}
+		return nil
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "error updating database")
+	}
+
+	return nil
+}
+
 // nestedView runs throug every bucket recursively
 // in the end we'll get tree view of data
 func nestedView(b *bolt.Bucket, indent string) string {
