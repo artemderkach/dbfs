@@ -18,7 +18,7 @@ const basePath string = "/db"
 
 type Rest struct {
 	Store *store.Store
-	Email *email.Email
+	Email email.EmailService
 }
 
 // Router creates router instance with mapped routes
@@ -26,7 +26,7 @@ func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", rest.home)
-	router.HandleFunc("/register", rest.register)
+	router.HandleFunc("/register", rest.register).Methods("POST")
 
 	// actual db interactions
 	subrouter := router.PathPrefix(basePath).Subrouter()
@@ -141,6 +141,7 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 	rand.Read(b)
 	token := fmt.Sprintf("%x", b)
 
+	// create collection with token value
 	err = rest.Store.Create(token)
 	if err != nil {
 		sendErr(w, err)
@@ -153,7 +154,7 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("register"))
+	w.Write([]byte("registered"))
 }
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {

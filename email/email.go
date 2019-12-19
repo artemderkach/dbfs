@@ -8,6 +8,11 @@ import (
 	"github.com/mailgun/mailgun-go/v3"
 )
 
+// EmailService interface needed for testing purposes
+type EmailService interface {
+	Send(targetEmail, msgBody string) (string, error)
+}
+
 // Email stucture provides access for sending emails
 type Email struct {
 	mailgun       *mailgun.MailgunImpl

@@ -10,7 +10,8 @@ services:
     environment:
       - APP_PORT=8080
       - DB_PATH=/var/db/data.bolt
-      - APP_PASS
+      - MAILGUN_API_KEY
+      - MAINLUN_DOMAIN
     volumes:
       - /var/db:/var/db
     restart: always

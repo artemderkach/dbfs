@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -144,6 +146,44 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestRegister(t *testing.T) {
+	tt := []struct {
+		Email        string
+		ResponseBody string
+	}{
+		{
+			"random@gmail.com",
+			"registered",
+		},
+	}
+
+	r, err := getRest()
+	require.Nil(t, err)
+	defer r.Store.Drop()
+
+	ts := httptest.NewServer(r.Router())
+	defer ts.Close()
+
+	for _, test := range tt {
+		req := &registerRequest{
+			Email: test.Email,
+		}
+		reqBody, err := json.Marshal(req)
+		require.Nil(t, err)
+
+		u, err := url.Parse(ts.URL)
+		u.Path = path.Join(u.Path, "/register")
+
+		resp, err := http.Post(u.String(), "application/json", bytes.NewReader(reqBody))
+		require.Nil(t, err)
+
+		msg, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		assert.Equal(t, test.ResponseBody, string(msg))
+	}
+}
+
 // func TestPrivate(t *testing.T) {
 // 	tt := []struct {
 // 		url      string
@@ -191,10 +231,19 @@ func getRest() (*Rest, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	r := &Rest{
 		Store: s,
+		Email: &emailMock{},
 	}
+
 	return r, nil
+}
+
+type emailMock struct{}
+
+func (e *emailMock) Send(targetEmail, msgBody string) (string, error) {
+	return "OK", nil
 }
 
 func getStore() (*store.Store, error) {
