@@ -1,12 +1,26 @@
 # dbfs
-file system in database
+http interface for storing files
 
 ## purpose
 just for the memes
 
 ## starting service
-- `docker-compose up --build` to start on `:8080` port. You should put `APP_PASS=${HASH_OF_YOUR_PASSWORD}` in `.env` file in project root
+- `docker-compose up --build` to start on `:8080` port
 - `go build && ./dbfs` to start on `:8080` port 
+
+## flow
+first you should create your space for storing files  
+`curl -X '{"email":"myEpicEmail"}' localhost:8080/register`
+you'll get token on email
+
+## environment variables
+
+| environment    | default value  |   |   |   |
+|----------------|----------------|---|---|---|
+| APP_PORT       | 8080           |   |   |   |
+| DB_PATH        | /tmp/mydb.bolt |   |   |   |
+| MAIGUN_API_KEY |                |   |   |   |
+| MAINLUN_DOMAIN |                |   |   |   |
 
 ## api
 `{collection}` could be one of `private` or `public`  
