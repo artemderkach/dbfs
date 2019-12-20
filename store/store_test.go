@@ -183,6 +183,12 @@ func TestPut(t *testing.T) {
 			"memes",
 			errors.New("error updating database: name \"The Ring\" already used"),
 		},
+		{
+			"private",
+			[]string{"The Ring", "omg this should fail"},
+			"memes",
+			errors.New("error updating database: high level collection not exists"),
+		},
 	}
 
 	s, err := initStore()

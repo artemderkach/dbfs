@@ -25,6 +25,7 @@ func main() {
 		err = errors.Wrap(err, "error parsing environment variables")
 		log.Fatal(err)
 	}
+	fmt.Println(config)
 
 	r := &rest.Rest{
 		Store: &store.Store{

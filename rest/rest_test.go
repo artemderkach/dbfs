@@ -16,30 +16,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const defaultCollection = "public"
+
 func TestView(t *testing.T) {
 	tt := []struct {
 		Path         string
 		ResponseBody string
+		Token        string
 	}{
 		{
 			"",
 			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+			defaultCollection,
 		},
 		{
 			"/",
 			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\n",
+			defaultCollection,
 		},
 		{
 			"/must",
 			"have\n  been\n    like\n",
+			defaultCollection,
 		},
 		{
 			"/answer",
 			"42",
+			defaultCollection,
 		},
 		{
 			"/invalid",
 			"cannot view node",
+			"invalid token",
 		},
 	}
 
@@ -54,7 +62,12 @@ func TestView(t *testing.T) {
 		u, err := url.Parse(ts.URL)
 		u.Path = path.Join(u.Path, basePath, test.Path)
 
-		resp, err := http.Get(u.String())
+		client := &http.Client{}
+		req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+		require.Nil(t, err)
+		req.Header.Set("Authorization", test.Token)
+
+		resp, err := client.Do(req)
 		require.Nil(t, err)
 
 		msg, err := ioutil.ReadAll(resp.Body)
@@ -69,16 +82,25 @@ func TestPut(t *testing.T) {
 		Path         string
 		FileContent  string
 		ResponseBody string
+		Token        string
 	}{
 		{
 			"/new",
 			"data",
 			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\nnew\n",
+			defaultCollection,
 		},
 		{
 			"/must",
 			"some more data",
 			"cannot create node",
+			defaultCollection,
+		},
+		{
+			"/some/path",
+			"content",
+			"cannot create node",
+			"invalid token",
 		},
 	}
 
@@ -96,7 +118,13 @@ func TestPut(t *testing.T) {
 		u, err := url.Parse(ts.URL)
 		u.Path = path.Join(u.Path, basePath, test.Path)
 
-		resp, err := http.Post(u.String(), "application/octet-stream", file)
+		client := &http.Client{}
+		req, err := http.NewRequest(http.MethodPost, u.String(), file)
+		require.Nil(t, err)
+		req.Header.Set("Authorization", test.Token)
+		req.Header.Set("Content-Type", "application/octet-stream")
+
+		resp, err := client.Do(req)
 		require.Nil(t, err)
 
 		msg, err := ioutil.ReadAll(resp.Body)
@@ -110,14 +138,22 @@ func TestDelete(t *testing.T) {
 	tt := []struct {
 		Path         string
 		ResponseBody string
+		Token        string
 	}{
 		{
 			"/must/have",
 			"Neo\nanswer\nme\n  and\nmust\n",
+			defaultCollection,
 		},
 		{
 			"/must/have",
 			"cannot delete node",
+			defaultCollection,
+		},
+		{
+			"/must/have",
+			"empty Authorization header",
+			"",
 		},
 	}
 
@@ -135,6 +171,7 @@ func TestDelete(t *testing.T) {
 		client := &http.Client{}
 		req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 		require.Nil(t, err)
+		req.Header.Set("Authorization", test.Token)
 
 		resp, err := client.Do(req)
 		require.Nil(t, err)
@@ -250,26 +287,32 @@ func getStore() (*store.Store, error) {
 	s := &store.Store{
 		Path: "/tmp/db123",
 	}
+
+	err := s.Create(defaultCollection)
+	if err != nil {
+		return nil, err
+	}
+
 	r := strings.NewReader("42")
-	err := s.Put("public", []string{"answer"}, r)
+	err = s.Put(defaultCollection, []string{"answer"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The One")
-	err = s.Put("public", []string{"Neo"}, r)
+	err = s.Put(defaultCollection, []string{"Neo"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("The Boys")
-	err = s.Put("public", []string{"me", "and"}, r)
+	err = s.Put(defaultCollection, []string{"me", "and"}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	r = strings.NewReader("blinking guy")
-	err = s.Put("public", []string{"must", "have", "been", "like"}, r)
+	err = s.Put(defaultCollection, []string{"must", "have", "been", "like"}, r)
 	if err != nil {
 		return nil, err
 	}

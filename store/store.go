@@ -103,9 +103,9 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(collection))
-		if err != nil {
-			return errors.Wrap(err, "error opening bucket")
+		b := tx.Bucket([]byte(collection))
+		if b == nil {
+			return errors.New("high level collection not exists")
 		}
 
 		// skip last element, it will be checked after loop

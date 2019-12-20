@@ -39,7 +39,12 @@ func (rest *Rest) Router() *mux.Router {
 }
 
 func sendErr(w http.ResponseWriter, err error, msg string) {
-	log.Printf("[ERROR] %s", errors.Wrap(err, msg))
+	if err == nil {
+		log.Printf("[ERROR] %s", errors.New(msg))
+	} else {
+		log.Printf("[ERROR] %s", errors.Wrap(err, msg))
+	}
+
 	w.Write([]byte(msg))
 }
 
@@ -69,7 +74,13 @@ func (rest *Rest) stripPrefix(next http.Handler) http.Handler {
 // view return the current state of database in form of tree view
 func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
-	b, err := rest.Store.Get("public", keys)
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		sendErr(w, nil, "empty Authorization header")
+		return
+	}
+
+	b, err := rest.Store.Get(token, keys)
 	if err != nil {
 		sendErr(w, err, "cannot view node")
 		return
@@ -83,14 +94,19 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 // Take "multipart/form-data" request with "file" key
 func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		sendErr(w, nil, "empty Authorization header")
+		return
+	}
 
-	err := rest.Store.Put("public", keys, r.Body)
+	err := rest.Store.Put(token, keys, r.Body)
 	if err != nil {
 		sendErr(w, err, "cannot create node")
 		return
 	}
 
-	b, err := rest.Store.Get("public", nil)
+	b, err := rest.Store.Get(token, nil)
 	if err != nil {
 		sendErr(w, err, "data written successfully, but cannot view result")
 		return
@@ -104,14 +120,19 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 // returnes current state of tree (GET / route)
 func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		sendErr(w, nil, "empty Authorization header")
+		return
+	}
 
-	err := rest.Store.Delete("public", keys)
+	err := rest.Store.Delete(token, keys)
 	if err != nil {
 		sendErr(w, err, "cannot delete node")
 		return
 	}
 
-	b, err := rest.Store.Get("public", nil)
+	b, err := rest.Store.Get(token, nil)
 	if err != nil {
 		sendErr(w, err, "data deleted successfully, but cannot view result")
 		return
@@ -127,6 +148,7 @@ type registerRequest struct {
 }
 
 // register creates token for user
+// token will also be users private bucket name
 func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 	req := &registerRequest{}
 
