@@ -39,7 +39,7 @@ func TestView(t *testing.T) {
 		},
 		{
 			"/invalid",
-			"error retrieving view data from database: error getting elements from bucket: bucket \"invalid\" not found",
+			"cannot view node",
 		},
 	}
 
@@ -78,7 +78,7 @@ func TestPut(t *testing.T) {
 		{
 			"/must",
 			"some more data",
-			"error writing file to storage: error updating database: name \"must\" already used",
+			"cannot create node",
 		},
 	}
 
@@ -117,7 +117,7 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			"/must/have",
-			"error deleting file from database: error updating database: bucket not found",
+			"cannot delete node",
 		},
 	}
 

@@ -25,7 +25,7 @@ type Rest struct {
 func (rest *Rest) Router() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/", rest.home)
+	router.HandleFunc("/", rest.home).Methods("GET")
 	router.HandleFunc("/register", rest.register).Methods("POST")
 
 	// actual db interactions
@@ -38,9 +38,9 @@ func (rest *Rest) Router() *mux.Router {
 	return router
 }
 
-func sendErr(w http.ResponseWriter, err error) {
-	log.Println(err)
-	w.Write([]byte(err.Error()))
+func sendErr(w http.ResponseWriter, err error, msg string) {
+	log.Printf("[ERROR] %s", errors.Wrap(err, msg))
+	w.Write([]byte(msg))
 }
 
 // splitPath will split input string by "/"
@@ -71,7 +71,7 @@ func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
 	b, err := rest.Store.Get("public", keys)
 	if err != nil {
-		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
+		sendErr(w, err, "cannot view node")
 		return
 	}
 	if _, err = w.Write(b); err != nil {
@@ -86,13 +86,13 @@ func (rest *Rest) put(w http.ResponseWriter, r *http.Request) {
 
 	err := rest.Store.Put("public", keys, r.Body)
 	if err != nil {
-		sendErr(w, errors.Wrap(err, "error writing file to storage"))
+		sendErr(w, err, "cannot create node")
 		return
 	}
 
 	b, err := rest.Store.Get("public", nil)
 	if err != nil {
-		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
+		sendErr(w, err, "data written successfully, but cannot view result")
 		return
 	}
 	if _, err = w.Write(b); err != nil {
@@ -107,13 +107,13 @@ func (rest *Rest) delete(w http.ResponseWriter, r *http.Request) {
 
 	err := rest.Store.Delete("public", keys)
 	if err != nil {
-		sendErr(w, errors.Wrap(err, "error deleting file from database"))
+		sendErr(w, err, "cannot delete node")
 		return
 	}
 
 	b, err := rest.Store.Get("public", nil)
 	if err != nil {
-		sendErr(w, errors.Wrap(err, "error retrieving view data from database"))
+		sendErr(w, err, "data deleted successfully, but cannot view result")
 		return
 	}
 
@@ -132,7 +132,7 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		sendErr(w, err)
+		sendErr(w, err, "invalid request body")
 		return
 	}
 
@@ -144,13 +144,13 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 	// create collection with token value
 	err = rest.Store.Create(token)
 	if err != nil {
-		sendErr(w, err)
+		sendErr(w, err, "cannot register")
 		return
 	}
 
 	_, err = rest.Email.Send(req.Email, token)
 	if err != nil {
-		sendErr(w, err)
+		sendErr(w, err, "registration successful, but cannot send email with token")
 		return
 	}
 
