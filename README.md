@@ -10,7 +10,7 @@ just for the memes
 
 ## flow
 first you should create your space for storing files  
-`curl -X '{"email":"myEpicEmail"}' localhost:8080/register`
+`curl -X -d '{"email":"myEpicEmail"}' localhost:8080/register`  
 you'll get token on email
 
 ## environment variables
