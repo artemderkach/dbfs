@@ -13,10 +13,11 @@ import (
 )
 
 type Config struct {
-	APP_PORT        string `env:"APP_PORT" envDefault:"8080"`
-	DB_PATH         string `env:"DB_PATH" envDefault:"/tmp/mydb.bolt"`
-	MAILGUN_API_KEY string `env:"MAILGUN_API_KEY" envDefault:""`
-	MAILGUN_DOMAIN  string `env:"MAILGUN_DOMAIN" envDefault:""`
+	APP_PORT            string `env:"APP_PORT" envDefault:"8080"`
+	DB_PATH             string `env:"DB_PATH" envDefault:"/tmp/mydb.bolt"`
+	MAILGUN_API_KEY     string `env:"MAILGUN_API_KEY" envDefault:""`
+	MAILGUN_ROOT_DOMAIN string `env:"MAILGUN_ROOT_DOMAIN"`
+	MAILGUN_SUBDOMAIN   string `env:"MAILGUN_SUBDOMAIN" envDefault:""`
 }
 
 func main() {
@@ -25,13 +26,12 @@ func main() {
 		err = errors.Wrap(err, "error parsing environment variables")
 		log.Fatal(err)
 	}
-	fmt.Println(config)
 
 	r := &rest.Rest{
 		Store: &store.Store{
 			Path: config.DB_PATH,
 		},
-		Email: email.New(config.MAILGUN_API_KEY, config.MAILGUN_DOMAIN),
+		Email: email.New(config.MAILGUN_API_KEY, config.MAILGUN_ROOT_DOMAIN, config.MAILGUN_SUBDOMAIN),
 	}
 
 	fmt.Println("starting dbfs on localhost:" + config.APP_PORT)

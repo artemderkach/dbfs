@@ -15,20 +15,26 @@ type EmailService interface {
 
 // Email stucture provides access for sending emails
 type Email struct {
-	mailgun       *mailgun.MailgunImpl
-	mailgunDomain string
+	mailgun           *mailgun.MailgunImpl
+	mailgunRootDomain string
+	mailgunSubdomain  string
 }
 
 // New creates Email instance. Needed for encapsulating API key, domain
-func New(mailgunAPIKey, mailgunDomain string) *Email {
-	mg := mailgun.NewMailgun(mailgunDomain, mailgunAPIKey)
-	return &Email{mailgun: mg, mailgunDomain: mailgunDomain}
+func New(mailgunAPIKey, mailgunRootDomain, mailgunSubdomain string) *Email {
+	mg := mailgun.NewMailgun(mailgunSubdomain, mailgunAPIKey)
+	mg.SetAPIBase(mailgun.APIBaseEU)
+	return &Email{
+		mailgun:           mg,
+		mailgunRootDomain: mailgunRootDomain,
+		mailgunSubdomain:  mailgunSubdomain,
+	}
 }
 
 // Send sends email to specific address
 func (e *Email) Send(targetEmail, msgBody string) (string, error) {
 	m := e.mailgun.NewMessage(
-		"dbfs@"+e.mailgunDomain,
+		"dbfs@"+e.mailgunRootDomain,
 		"token",
 		msgBody,
 		targetEmail,

@@ -10,17 +10,18 @@ just for the memes
 
 ## flow
 first you should create your space for storing files  
-`curl -X -d '{"email":"myEpicEmail"}' localhost:8080/register`  
+`curl -X POST -d '{"email":"myEpicEmail"}' localhost:8080/register`  
 you'll get token on email
 
 ## environment variables
 
-| environment    | default value  |   |   |   |
-|----------------|----------------|---|---|---|
-| APP_PORT       | 8080           |   |   |   |
-| DB_PATH        | /tmp/mydb.bolt |   |   |   |
-| MAIGUN_API_KEY |                |   |   |   |
-| MAINLUN_DOMAIN |                |   |   |   |
+| environment    	| default value  |
+|-----------------------|----------------|
+| APP_PORT       	| 8080           |
+| DB_PATH             	| /tmp/mydb.bolt |
+| MAIGUN_API_KEY      	|                |
+| MAINLUN_ROOT_DOMAIN	|                |
+| MAILGUN_SUBDOMAIN	|		 |
 
 ## api
 `{collection}` could be one of `private` or `public`  
