@@ -19,7 +19,7 @@ you'll get token on email
 |-----------------------|----------------|
 | APP_PORT       	      | 8080           |
 | DB_PATH             	| /tmp/mydb.bolt |
-| MAIGUN_API_KEY      	|                |
+| MAILGUN_API_KEY      	|                |
 | MAILGUN_ROOT_DOMAIN	|                |
 | MAILGUN_SUBDOMAIN	   |                |
 
