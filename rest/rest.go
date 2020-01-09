@@ -163,6 +163,12 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 	rand.Read(b)
 	token := fmt.Sprintf("%x", b)
 
+	_, err = rest.Email.Send(req.Email, token)
+	if err != nil {
+		sendErr(w, err, "cannot send email with token")
+		return
+	}
+
 	// create collection with token value
 	err = rest.Store.Create(token)
 	if err != nil {
@@ -170,13 +176,7 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = rest.Email.Send(req.Email, token)
-	if err != nil {
-		sendErr(w, err, "registration successful, but cannot send email with token")
-		return
-	}
-
-	w.Write([]byte("registered"))
+	w.Write([]byte("registration successful. check email"))
 }
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {

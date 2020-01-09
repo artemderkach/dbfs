@@ -84,11 +84,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		return errors.Errorf("bucket \"%s\" not found", lastElem)
 	})
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting elements from bucket")
-	}
-
-	return result, err
+	return result, errors.Wrap(err, "error getting elements from bucket")
 }
 
 // Put creates bucket for each "key" passed in params, except for the last one
@@ -137,11 +133,7 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 		return nil
 	})
 
-	if err != nil {
-		return errors.Wrap(err, "error updating database")
-	}
-
-	return nil
+	return errors.Wrap(err, "error updating database")
 }
 
 // Delete removes element from database
@@ -183,11 +175,8 @@ func (store *Store) Delete(collection string, keys []string) error {
 
 		return nil
 	})
-	if err != nil {
-		return errors.Wrap(err, "error updating database")
-	}
 
-	return nil
+	return errors.Wrap(err, "error updating database")
 }
 
 // Create creates bucket for new user
@@ -206,11 +195,7 @@ func (store *Store) Create(collection string) error {
 		return nil
 	})
 
-	if err != nil {
-		return errors.Wrap(err, "error updating database")
-	}
-
-	return nil
+	return errors.Wrap(err, "error updating database")
 }
 
 // nestedView runs throug every bucket recursively

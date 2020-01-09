@@ -190,7 +190,7 @@ func TestRegister(t *testing.T) {
 	}{
 		{
 			"random@gmail.com",
-			"registered",
+			"registration successful. check email",
 		},
 	}
 
