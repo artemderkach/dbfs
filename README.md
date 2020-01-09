@@ -17,11 +17,11 @@ you'll get token on email
 
 | environment    	| default value  |
 |-----------------------|----------------|
-| APP_PORT       	| 8080           |
+| APP_PORT       	      | 8080           |
 | DB_PATH             	| /tmp/mydb.bolt |
 | MAIGUN_API_KEY      	|                |
-| MAINLUN_ROOT_DOMAIN	|                |
-| MAILGUN_SUBDOMAIN	|		 |
+| MAILGUN_ROOT_DOMAIN	|                |
+| MAILGUN_SUBDOMAIN	   |                |
 
 ## api
 `{collection}` could be one of `private` or `public`  
