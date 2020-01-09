@@ -9,9 +9,16 @@ just for the memes
 - `go build && ./dbfs` to start on `:8080` port 
 
 ## flow
-first you should create your space for storing files  
+- you should create your space for storing files  
 `curl -X POST -d '{"email":"myEpicEmail"}' localhost:8080/register`  
 you'll get token on email
+- put this token in request header for accessing your workspace  
+`curl -H "Authorization: MY_SECRET_TOKEN" ...`  
+or you could put "Authorization: MY_SECRET_TOKEN" in file for request simplification  
+`cull -H @path/to/file`  
+
+## API
+
 
 ## environment variables
 
