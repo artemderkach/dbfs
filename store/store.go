@@ -49,7 +49,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
-			return errors.Errorf("bucket not exists")
+			return errors.Errorf("bucket \"%s\" not exists", collection)
 		}
 
 		// handle case for top level bucket
@@ -84,6 +84,7 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		return errors.Errorf("bucket \"%s\" not found", lastElem)
 	})
+
 	return result, errors.Wrap(err, "error getting elements from bucket")
 }
 
@@ -101,7 +102,7 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
-			return errors.New("high level collection not exists")
+			return errors.Errorf("bucket \"%s\" not exists", collection)
 		}
 
 		// skip last element, it will be checked after loop
@@ -152,7 +153,7 @@ func (store *Store) Delete(collection string, keys []string) error {
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
-			return errors.Errorf("bucket \"%s\" not found", collection)
+			return errors.Errorf("bucket \"%s\" not exists", collection)
 		}
 		// skip last element, it will be checked after loop
 		for i := 0; i < len(keys)-1; i += 1 {

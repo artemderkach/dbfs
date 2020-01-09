@@ -187,7 +187,7 @@ func TestPut(t *testing.T) {
 			"private",
 			[]string{"The Ring", "omg this should fail"},
 			"memes",
-			errors.New("error updating database: high level collection not exists"),
+			errors.New("error updating database: bucket \"private\" not exists"),
 		},
 	}
 
