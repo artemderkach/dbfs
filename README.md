@@ -36,4 +36,3 @@ Next requests require "Authorization: TOKEN_VALUE" as header
 | MAILGUN_API_KEY      	|                |
 | MAILGUN_ROOT_DOMAIN	|                |
 | MAILGUN_SUBDOMAIN	   |                |
-
