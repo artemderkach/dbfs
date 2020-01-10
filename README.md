@@ -18,12 +18,8 @@ or you could put "Authorization: MY_SECRET_TOKEN" in file for request simplifica
 `cull -H @path/to/file`  
 
 ## API
-`POST /register` register user with given email
-```
-{
-	email: "42@mail.com"
-}
-```
+`POST /register` register user with given email  
+`{ email: "42@mail.com" }`  
 
 ## environment variables
 
