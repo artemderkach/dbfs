@@ -20,6 +20,10 @@ or you could put "Authorization: MY_SECRET_TOKEN" in file for request simplifica
 ## API
 `POST /register` register user with given email  
 `{ email: "42@mail.com" }`  
+Next requests require "Authorization: TOKEN_VALUE" as header  
+`GET /db` list root path  
+`GET /db/some/path` list elements in given path  
+`GET /db/some/file` download element (in case it is file)  
 
 ## environment variables
 
