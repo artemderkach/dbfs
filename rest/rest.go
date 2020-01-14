@@ -14,7 +14,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-const basePath string = "/db"
+const (
+	basePath   = "/db"
+	sharePath  = "/share"
+	sharedPath = "/shared"
+)
 
 type Rest struct {
 	Store *store.Store
@@ -29,11 +33,20 @@ func (rest *Rest) Router() *mux.Router {
 	router.HandleFunc("/register", rest.register).Methods("POST")
 
 	// actual db interactions
-	subrouter := router.PathPrefix(basePath).Subrouter()
-	subrouter.Use(rest.stripPrefix)
-	subrouter.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
-	subrouter.PathPrefix("").HandlerFunc(rest.put).Methods("POST")
-	subrouter.PathPrefix("").HandlerFunc(rest.delete).Methods("DELETE")
+	dbSubrouter := router.PathPrefix(basePath).Subrouter()
+	dbSubrouter.Use(rest.stripPrefix(basePath))
+	dbSubrouter.PathPrefix("").HandlerFunc(rest.view).Methods("GET")
+	dbSubrouter.PathPrefix("").HandlerFunc(rest.put).Methods("POST")
+	dbSubrouter.PathPrefix("").HandlerFunc(rest.delete).Methods("DELETE")
+
+	// share functionality
+	sharedSubrouter := router.PathPrefix(sharedPath).Subrouter()
+	sharedSubrouter.Use(rest.stripPrefix(sharedPath))
+	sharedSubrouter.PathPrefix("").HandlerFunc(rest.shared).Methods("GET")
+
+	shareSubrouter := router.PathPrefix(sharePath).Subrouter()
+	shareSubrouter.Use(rest.stripPrefix(sharePath))
+	shareSubrouter.PathPrefix("").HandlerFunc(rest.share).Methods("GET")
 
 	return router
 }
@@ -63,23 +76,25 @@ func splitPath(path string) []string {
 	return filterdKeys
 }
 
-// stripPrefix removes basePath from request url
-func (rest *Rest) stripPrefix(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimPrefix(r.URL.Path, basePath)
-		next.ServeHTTP(w, r)
-	})
+// stripPrefix removes prefix from request url
+func (rest *Rest) stripPrefix(prefix string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // view return the current state of database in form of tree view
 func (rest *Rest) view(w http.ResponseWriter, r *http.Request) {
-	keys := splitPath(r.URL.Path)
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		sendErr(w, nil, "empty Authorization header")
 		return
 	}
 
+	keys := splitPath(r.URL.Path)
 	b, err := rest.Store.Get(token, keys)
 	if err != nil {
 		sendErr(w, err, "cannot view node")
@@ -177,6 +192,54 @@ func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte("registration successful. check email"))
+}
+
+// create shared folder
+func (rest *Rest) share(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		sendErr(w, nil, "empty Authorization header")
+		return
+	}
+
+	// generate token
+	b := make([]byte, 16)
+	rand.Read(b)
+	sharedToken := fmt.Sprintf("%x", b)
+
+	keys := splitPath(r.URL.Path)
+	err := rest.Store.Share(token, keys, sharedToken)
+	if err != nil {
+		sendErr(w, err, "cannot share node")
+		return
+	}
+
+	b, err = rest.Store.Get(token, []string{})
+	if err != nil {
+		sendErr(w, err, "cannot view node")
+		return
+	}
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
+
+}
+
+// shared is a route for getting shared info
+func (rest *Rest) shared(w http.ResponseWriter, r *http.Request) {
+	keys := splitPath(r.URL.Path)
+	if len(keys) <= 1 {
+		sendErr(w, nil, "shearch path should be provided")
+		return
+	}
+	b, err := rest.Store.Get(keys[0], keys[1:len(keys)-1])
+	if err != nil {
+		sendErr(w, err, "cannot view node")
+		return
+	}
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
 }
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {

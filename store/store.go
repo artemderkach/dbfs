@@ -54,8 +54,8 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		// handle case for top level bucket
 		if len(keys) == 0 {
-			result = []byte(nestedView(b, ""))
-			return nil
+			result, err = view(tx, b, "")
+			return errors.Wrap(err, "error viewing node")
 		}
 
 		// skip last element, it will be checked after loop
@@ -71,8 +71,8 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 
 		// if the last element is bucket
 		if b.Bucket([]byte(lastElem)) != nil {
-			result = []byte(nestedView(b.Bucket([]byte(lastElem)), ""))
-			return nil
+			result, err = view(tx, b.Bucket([]byte(lastElem)), "")
+			return errors.Wrap(err, "error creating view")
 		}
 		// if the last element is file
 		v := b.Get([]byte(lastElem))
@@ -93,6 +93,11 @@ func (store *Store) Get(collection string, keys []string) ([]byte, error) {
 // if only one "key" passed, file will be created in root directory
 // this function cannot create bucket without file, so reader is required
 func (store *Store) Put(collection string, keys []string, file io.Reader) error {
+	// protect reserved name
+	if len(keys) > 0 && keys[0] == "shared" {
+		return errors.New("'shared' name is reserved")
+	}
+
 	db, err := store.open()
 	if err != nil {
 		return errors.New("error opening database")
@@ -141,6 +146,11 @@ func (store *Store) Put(collection string, keys []string, file io.Reader) error 
 // in case it is a bucket, remove this bucket and all elements under this bucket
 // bucket removes recursively
 func (store *Store) Delete(collection string, keys []string) error {
+	// protect reserved name
+	if len(keys) > 0 && keys[0] == "shared" {
+		return errors.New("'shared' name is reserved")
+	}
+
 	if len(keys) == 0 {
 		return errors.New("empty delete request")
 	}
@@ -199,6 +209,72 @@ func (store *Store) Create(collection string) error {
 	return errors.Wrap(err, "error updating database")
 }
 
+// Copy element from given collection to target collection
+func (store *Store) Share(collection string, from []string, target string) error {
+	db, err := store.open()
+	if err != nil {
+		return errors.Wrap(err, "error openiong database")
+	}
+	defer db.Close()
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket([]byte(target))
+
+		return errors.Wrap(err, "error creating new bucket")
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "error sharing bucket")
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		fromBucket := tx.Bucket([]byte(collection))
+		if err != nil {
+			return errors.Wrap(err, "error getting existing bucket")
+		}
+
+		shared, err := fromBucket.CreateBucketIfNotExists([]byte("shared"))
+		if err != nil {
+			return err
+		}
+
+		// create reference to shared elements
+		err = shared.Put([]byte(target), []byte(""))
+		if err != nil {
+			return errors.Wrap(err, "error creating shared bucket")
+		}
+
+		targetName := collection
+		if len(from) != 0 {
+			for _, bucketName := range from {
+				targetName = bucketName
+				fromBucket = fromBucket.Bucket([]byte(bucketName))
+				if fromBucket == nil {
+					return errors.Errorf("bucket \"%s\" not exists", bucketName)
+				}
+			}
+		}
+
+		targetBucket := tx.Bucket([]byte(target))
+
+		return copyBucket(fromBucket, targetBucket, targetName)
+	})
+
+	return errors.Wrap(err, "error updating database")
+}
+
+// view
+func view(tx *bolt.Tx, b *bolt.Bucket, indent string) ([]byte, error) {
+	result := nestedView(b, indent)
+
+	sharedResult, err := sharedView(tx, b, indent)
+	if sharedResult != "" {
+		result += sharedResult
+	}
+
+	return []byte(result), errors.Wrap(err, "error creating view")
+}
+
 // nestedView runs throug every bucket recursively
 // in the end we'll get tree view of data
 func nestedView(b *bolt.Bucket, indent string) string {
@@ -206,8 +282,14 @@ func nestedView(b *bolt.Bucket, indent string) string {
 
 	c := b.Cursor()
 	for k, _ := c.First(); k != nil; k, _ = c.Next() {
+		// shared element will be processed after loop
+		if string(k) == "shared" {
+			continue
+		}
+
 		view += indent + string(k) + "\n"
 
+		// nestedBucket will be nil if "k" is'n bucket
 		nestedBucket := b.Bucket(k)
 		if nestedBucket != nil {
 			view += nestedView(nestedBucket, indent+"  ")
@@ -215,4 +297,54 @@ func nestedView(b *bolt.Bucket, indent string) string {
 	}
 
 	return view
+}
+
+// sharedView takes names from 'shared' node, than use this names to search for its view on top-level
+func sharedView(tx *bolt.Tx, b *bolt.Bucket, indent string) (string, error) {
+	shared := b.Bucket([]byte("shared"))
+	if shared == nil {
+		return "", nil
+	}
+
+	result := ""
+
+	result += indent + "shared" + "\n"
+	c := shared.Cursor()
+	for k, _ := c.First(); k != nil; k, _ = c.Next() {
+		result += indent + "  " + string(k) + "\n"
+		// nestedBucket will be nil if "k" is'n bucket
+		nestedBucket := tx.Bucket(k)
+		if nestedBucket != nil {
+			result += nestedView(nestedBucket, indent+"  "+"  ")
+		}
+	}
+
+	return result, nil
+}
+
+// interface is needed due to possible input as "*bolt.Bucket" or "*bolt.Tx"
+type bucket interface {
+	Bucket([]byte) *bolt.Bucket
+	CreateBucket([]byte) (*bolt.Bucket, error)
+	Put([]byte, []byte) error
+	ForEach(func([]byte, []byte) error) error
+}
+
+// copyBucket copies "source" bucket and all his childs inside "target"
+func copyBucket(source bucket, target bucket, name string) error {
+	err := source.ForEach(func(k, v []byte) error {
+		newTarget, err := target.CreateBucket([]byte(name))
+		if err != nil {
+			return err
+		}
+
+		nestedBucket := source.Bucket(k)
+		if nestedBucket == nil {
+			return newTarget.Put(k, v)
+		}
+
+		return copyBucket(nestedBucket, newTarget, string(k))
+	})
+
+	return errors.Wrap(err, "error wile recursive copying")
 }
