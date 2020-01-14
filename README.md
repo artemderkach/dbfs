@@ -38,7 +38,7 @@ Next requests require "Authorization: TOKEN_VALUE" as header
 | MAILGUN_SUBDOMAIN	   |                |
 
 ## examples
-`curl -w '\n' -X POST -d '{"email": "myEpicEmail@gmail.com"}' localhost:8080/register` register with given email
+`curl -w '\n' -X POST -d '{"email": "myEpicEmail@gmail.com"}' localhost:8080/register` register with given email  
 `curl -w '\n' -X POST -H @$HOME/Documents/dbfs_headers -d $HOME/data.txt localhost:8080/db/data.txt` write file with (use auth headers from file)  
 `curl -w '\n' -X POST -H @$HOME/Documents/dbfs_headers -d $HOME/data.txt localhost:8080/db/data.txt` write file with (use auth direct)  
 
@@ -46,11 +46,7 @@ Next requests require "Authorization: TOKEN_VALUE" as header
 `curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db` view root tree  
 
 `curl -w '\n' -X DELETE -H @$HOME/Documents/dbfs_headers localhost:8080/db/data.txt` delete data file  
-`curl -w '\n' -X DELETE -H @$HOME/Documents/dbfs_headers localhost:8080/db/someFolder` in case of folder, will delete it and all it's childs
+`curl -w '\n' -X DELETE -H @$HOME/Documents/dbfs_headers localhost:8080/db/someFolder` in case of folder, will delete it and all it's childs  
 
 `curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/share/someFolder` share folder (after which, you can access to it without auth header. you can find token it root tree  
-`curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/shared/<token>/someFolder` view or download shared data
-
-
-
-`curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db/some/path/important.txt` dowlo
+`curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/shared/<token>/someFolder` view or download shared data  
