@@ -22,10 +22,10 @@ or you could put "Authorization: MY_SECRET_TOKEN" in file for request simplifica
 `{ email: "42@mail.com" }`  
 Next requests require "Authorization: TOKEN_VALUE" as header  
 `GET /db` list root path  
-`GET /db/some/path` list elements in given path  
-`GET /db/some/file` download element (in case it is file)  
-`POST /db/path/to file` write file (should be sent as data-binary request) to given path  
-`DELETE /db/path/to/folder/or/file` deletes given element  
+`POST /db` write file (should be sent as data-binary request) to given path  
+`DELETE /db` deletes given element  
+`GET /share` copies node to publick space  
+`GET /shared` get shared data  
 
 ## environment variables
 
