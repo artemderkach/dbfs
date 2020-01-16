@@ -346,5 +346,21 @@ func copyBucket(source bucket, target bucket, name string) error {
 		return copyBucket(nestedBucket, newTarget, string(k))
 	})
 
-	return errors.Wrap(err, "error wile recursive copying")
+	return errors.Wrap(err, "error while recursive copying")
+}
+
+// copyChilds copies "source" bucket childs to "target"
+// this function is needed for root copying
+func copyChilds(source *bolt.Bucket, target *bolt.Bucket) error {
+	err := source.ForEach(func(k, v []byte) error {
+		nestedBucket := source.Bucket(k)
+		if nestedBucket == nil {
+			return target.Put(k, v)
+		}
+
+		return copyBucket(nestedBucket, target, string(k))
+
+	})
+
+	return errors.Wrap(err, "error while copying childs")
 }

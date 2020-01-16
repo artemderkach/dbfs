@@ -43,6 +43,7 @@ func (rest *Rest) Router() *mux.Router {
 	sharedSubrouter := router.PathPrefix(sharedPath).Subrouter()
 	sharedSubrouter.Use(rest.stripPrefix(sharedPath))
 	sharedSubrouter.PathPrefix("").HandlerFunc(rest.shared).Methods("GET")
+	sharedSubrouter.PathPrefix("").HandlerFunc(rest.deleteShared).Methods("DELETE")
 
 	shareSubrouter := router.PathPrefix(sharePath).Subrouter()
 	shareSubrouter.Use(rest.stripPrefix(sharePath))
@@ -229,7 +230,7 @@ func (rest *Rest) share(w http.ResponseWriter, r *http.Request) {
 func (rest *Rest) shared(w http.ResponseWriter, r *http.Request) {
 	keys := splitPath(r.URL.Path)
 	if len(keys) <= 1 {
-		sendErr(w, nil, "shearch path should be provided")
+		sendErr(w, nil, "search path should be provided")
 		return
 	}
 	b, err := rest.Store.Get(keys[0], keys[1:len(keys)-1])
@@ -237,6 +238,27 @@ func (rest *Rest) shared(w http.ResponseWriter, r *http.Request) {
 		sendErr(w, err, "cannot view node")
 		return
 	}
+	if _, err = w.Write(b); err != nil {
+		log.Println(err)
+	}
+}
+
+// deleteShared is a route for deleting shared info
+func (rest *Rest) deleteShared(w http.ResponseWriter, r *http.Request) {
+	keys := splitPath(r.URL.Path)
+
+	err := rest.Store.Delete(keys[0], []string{})
+	if err != nil {
+		sendErr(w, err, "cannot delete node")
+		return
+	}
+
+	b, err := rest.Store.Get(keys[0], nil)
+	if err != nil {
+		sendErr(w, err, "cannot view node")
+		return
+	}
+
 	if _, err = w.Write(b); err != nil {
 		log.Println(err)
 	}
