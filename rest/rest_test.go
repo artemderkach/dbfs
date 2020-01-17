@@ -3,13 +3,11 @@ package rest
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"path"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -226,12 +224,16 @@ func TestRegister(t *testing.T) {
 func TestShare(t *testing.T) {
 	tt := []struct {
 		Path         string
-		ResponseBody string
+		ViewLength   int
+		TokenLength  int
+		SharedResult string
 		Token        string
 	}{
 		{
 			"me",
-			"Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\nshared\n  [a-z0-9]{16,}\n    me\n      and\n",
+			111,
+			32,
+			"me\n  and\n",
 			defaultCollection,
 		},
 	}
@@ -244,46 +246,55 @@ func TestShare(t *testing.T) {
 	defer ts.Close()
 
 	for _, test := range tt {
+		// share request
 		u, err := url.Parse(ts.URL)
 		u.Path = path.Join(u.Path, sharePath, test.Path)
 
-		client := &http.Client{}
 		req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 		require.Nil(t, err)
 		req.Header.Set("Authorization", test.Token)
 
+		client := &http.Client{}
 		resp, err := client.Do(req)
+		require.Nil(t, err)
+
+		token, err := ioutil.ReadAll(resp.Body)
+		require.Nil(t, err)
+
+		assert.Equal(t, test.TokenLength, len(token))
+
+		// check shared path
+		u, err = url.Parse(ts.URL)
+		u.Path = path.Join(u.Path, sharedPath, string(token), test.Path)
+
+		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		require.Nil(t, err)
+
+		client = &http.Client{}
+		resp, err = client.Do(req)
 		require.Nil(t, err)
 
 		msg, err := ioutil.ReadAll(resp.Body)
 		require.Nil(t, err)
 
-		reg := regexp.MustCompile(test.ResponseBody)
+		assert.Equal(t, test.SharedResult, string(msg))
 
-		if !reg.MatchString(string(msg)) {
-			fmt.Println(string(msg))
-			fmt.Println(test.ResponseBody)
-			t.Error("response not matches template")
-		}
-
-		token := strings.TrimPrefix(string(msg), "Neo\nanswer\nme\n  and\nmust\n  have\n    been\n      like\nshared\n  ")
-		token = strings.TrimRight(token, "\n    me\n      and\n")
-
-		// check shared path
+		// check view
 		u, err = url.Parse(ts.URL)
-		u.Path = path.Join(u.Path, sharedPath, token, test.Path)
+		u.Path = path.Join(u.Path, basePath)
 
-		client = &http.Client{}
 		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
 		require.Nil(t, err)
+		req.Header.Set("Authorization", test.Token)
 
+		client = &http.Client{}
 		resp, err = client.Do(req)
 		require.Nil(t, err)
 
 		msg, err = ioutil.ReadAll(resp.Body)
 		require.Nil(t, err)
 
-		assert.Equal(t, "me\n  and\n", string(msg))
+		assert.Equal(t, test.ViewLength, len(msg))
 	}
 }
 

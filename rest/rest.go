@@ -215,15 +215,9 @@ func (rest *Rest) share(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err = rest.Store.Get(token, []string{})
-	if err != nil {
-		sendErr(w, err, "cannot view node")
-		return
-	}
-	if _, err = w.Write(b); err != nil {
+	if _, err = w.Write([]byte(sharedToken)); err != nil {
 		log.Println(err)
 	}
-
 }
 
 // shared is a route for getting shared info

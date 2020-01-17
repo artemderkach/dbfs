@@ -244,18 +244,19 @@ func (store *Store) Share(collection string, from []string, target string) error
 			return errors.Wrap(err, "error creating shared bucket")
 		}
 
-		targetName := collection
-		if len(from) != 0 {
-			for _, bucketName := range from {
-				targetName = bucketName
-				fromBucket = fromBucket.Bucket([]byte(bucketName))
-				if fromBucket == nil {
-					return errors.Errorf("bucket \"%s\" not exists", bucketName)
-				}
-			}
+		targetBucket := tx.Bucket([]byte(target))
+		if len(from) == 0 {
+			return copyChilds(fromBucket, targetBucket)
 		}
 
-		targetBucket := tx.Bucket([]byte(target))
+		targetName := ""
+		for _, bucketName := range from {
+			targetName = bucketName
+			fromBucket = fromBucket.Bucket([]byte(bucketName))
+			if fromBucket == nil {
+				return errors.Errorf("bucket \"%s\" not exists", bucketName)
+			}
+		}
 
 		return copyBucket(fromBucket, targetBucket, targetName)
 	})
@@ -326,6 +327,7 @@ func sharedView(tx *bolt.Tx, b *bolt.Bucket, indent string) (string, error) {
 type bucket interface {
 	Bucket([]byte) *bolt.Bucket
 	CreateBucket([]byte) (*bolt.Bucket, error)
+	CreateBucketIfNotExists([]byte) (*bolt.Bucket, error)
 	Put([]byte, []byte) error
 	ForEach(func([]byte, []byte) error) error
 }
@@ -333,7 +335,7 @@ type bucket interface {
 // copyBucket copies "source" bucket and all his childs inside "target"
 func copyBucket(source bucket, target bucket, name string) error {
 	err := source.ForEach(func(k, v []byte) error {
-		newTarget, err := target.CreateBucket([]byte(name))
+		newTarget, err := target.CreateBucketIfNotExists([]byte(name))
 		if err != nil {
 			return err
 		}
