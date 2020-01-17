@@ -1,7 +1,11 @@
 package main
 
 import (
+	"log"
+	"net"
 	"net/http"
+	"os"
+	"strconv"
 	"syscall"
 	"testing"
 	"time"
@@ -11,6 +15,14 @@ import (
 )
 
 func TestMain(t *testing.T) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		log.Fatal(err)
+	}
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+	os.Setenv("APP_PORT", port)
+	listener.Close()
+
 	// kill current process after 1 second
 	go func() {
 		time.Sleep(1000 * time.Millisecond)
@@ -25,7 +37,7 @@ func TestMain(t *testing.T) {
 	// give service .5 seconds to start
 	time.Sleep(500 * time.Millisecond)
 
-	resp, err := http.Get("http://localhost:8080")
+	resp, err := http.Get("http://localhost:" + port)
 	require.Nil(t, err)
 	defer resp.Body.Close()
 
