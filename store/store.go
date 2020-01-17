@@ -151,9 +151,6 @@ func (store *Store) Delete(collection string, keys []string) error {
 		return errors.New("'shared' name is reserved")
 	}
 
-	if len(keys) == 0 {
-		return errors.New("empty delete request")
-	}
 	db, err := store.open()
 	if err != nil {
 		return errors.Wrap(err, "error opening database")
@@ -161,6 +158,10 @@ func (store *Store) Delete(collection string, keys []string) error {
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
+		if len(keys) == 0 {
+			return tx.DeleteBucket([]byte(collection))
+		}
+
 		b := tx.Bucket([]byte(collection))
 		if b == nil {
 			return errors.Errorf("bucket \"%s\" not exists", collection)
