@@ -18,6 +18,8 @@ type Config struct {
 	MAILGUN_API_KEY     string `env:"MAILGUN_API_KEY" envDefault:""`
 	MAILGUN_ROOT_DOMAIN string `env:"MAILGUN_ROOT_DOMAIN"`
 	MAILGUN_SUBDOMAIN   string `env:"MAILGUN_SUBDOMAIN" envDefault:""`
+	WHITELIST           string `env:"WHITELIST"`
+	A                   string `env:"A"`
 }
 
 func main() {
@@ -31,7 +33,8 @@ func main() {
 		Store: &store.Store{
 			Path: config.DB_PATH,
 		},
-		Email: email.New(config.MAILGUN_API_KEY, config.MAILGUN_ROOT_DOMAIN, config.MAILGUN_SUBDOMAIN),
+		Email:     email.New(config.MAILGUN_API_KEY, config.MAILGUN_ROOT_DOMAIN, config.MAILGUN_SUBDOMAIN),
+		Whitelist: config.WHITELIST,
 	}
 
 	fmt.Println("starting dbfs on localhost:" + config.APP_PORT)

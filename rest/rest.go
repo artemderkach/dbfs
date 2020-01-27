@@ -21,8 +21,9 @@ const (
 )
 
 type Rest struct {
-	Store *store.Store
-	Email email.EmailService
+	Store     *store.Store
+	Email     email.EmailService
+	Whitelist string
 }
 
 // Router creates router instance with mapped routes
@@ -168,11 +169,25 @@ type registerRequest struct {
 // register creates token for user
 // token will also be users private bucket name
 func (rest *Rest) register(w http.ResponseWriter, r *http.Request) {
+	contains := func(str string, arr []string) bool {
+		for _, elem := range arr {
+			if str == elem {
+				return true
+			}
+		}
+		return false
+	}
 	req := &registerRequest{}
 
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
 		sendErr(w, err, "invalid request body")
+		return
+	}
+
+	whitelist := strings.Split(rest.Whitelist, ",")
+	if !contains(req.Email, whitelist) {
+		sendErr(w, nil, "current email is not whitelisted")
 		return
 	}
 
