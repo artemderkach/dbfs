@@ -26,6 +26,8 @@ Next requests require "Authorization: TOKEN_VALUE" as header
 `DELETE /db` deletes given element  
 `GET /share` copies node to publick space  
 `GET /shared` get shared data  
+`GET /help` API routes  
+`GET /examples` return requests examples  
 
 ## environment variables
 
@@ -40,7 +42,7 @@ Next requests require "Authorization: TOKEN_VALUE" as header
 ## examples
 `curl -w '\n' -X POST -d '{"email": "myEpicEmail@gmail.com"}' localhost:8080/register` register with given email  
 `curl -w '\n' -X POST -H @$HOME/Documents/dbfs_headers -d $HOME/data.txt localhost:8080/db/data.txt` write file with (use auth headers from file)  
-`curl -w '\n' -X POST -H @$HOME/Documents/dbfs_headers -d $HOME/data.txt localhost:8080/db/data.txt` write file with (use auth direct)  
+`curl -w '\n' -X POST -H "Authorization: <toke>" -d $HOME/data.txt localhost:8080/db/data.txt` write file with (use auth direct)  
 
 `curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db/data.txt` dowload written file  
 `curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db` view root tree  
