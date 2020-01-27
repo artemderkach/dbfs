@@ -347,8 +347,9 @@ func getRest() (*Rest, error) {
 	}
 
 	r := &Rest{
-		Store: s,
-		Email: &emailMock{},
+		Store:     s,
+		Email:     &emailMock{},
+		Whitelist: "random@gmail.com,myEpicEmail@gmail.com",
 	}
 
 	return r, nil
