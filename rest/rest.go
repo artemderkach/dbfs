@@ -31,6 +31,8 @@ func (rest *Rest) Router() *mux.Router {
 
 	router.HandleFunc("/", rest.home).Methods("GET")
 	router.HandleFunc("/register", rest.register).Methods("POST")
+	router.HandleFunc("/help", rest.help).Methods("GET")
+	router.HandleFunc("/examples", rest.examples).Methods("GET")
 
 	// actual db interactions
 	dbSubrouter := router.PathPrefix(basePath).Subrouter()
@@ -256,6 +258,34 @@ func (rest *Rest) deleteShared(w http.ResponseWriter, r *http.Request) {
 	if _, err = w.Write(b); err != nil {
 		log.Println(err)
 	}
+}
+
+func (rest *Rest) help(w http.ResponseWriter, r *http.Request) {
+	help := `request examples:
+/db       GET     list root path
+/db       POST    write file (should be sent as data-binary request) to given path
+/db       DELETE  deletes given element
+/share    GET     copies node to publick space
+/shared   GET     get shared data
+/help     GET     API
+/examples GET     examples
+`
+	w.Write([]byte(help))
+}
+
+func (rest *Rest) examples(w http.ResponseWriter, r *http.Request) {
+	help := `request examples:
+register          curl -w '\n' -X POST -d '{"email": "myEpicEmail@gmail.com"}' localhost:8080/register
+write file        curl -w '\n' -X POST -H @$HOME/Documents/dbfs_headers -d $HOME/data.txt localhost:8080/db/data.txt
+write file        curl -w '\n' -X POST -H "Authorization: <toke>" -d $HOME/data.txt localhost:8080/db/data.txt
+download file     curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db/data.txt
+view root tree    curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/db
+delete file       curl -w '\n' -X DELETE -H @$HOME/Documents/dbfs_headers localhost:8080/db/data.txt
+delete folder     curl -w '\n' -X DELETE -H @$HOME/Documents/dbfs_headers localhost:8080/db/someFolder
+share folder      curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/share/someFolder
+download shared   curl -w '\n' -X GET -H @$HOME/Documents/dbfs_headers localhost:8080/shared/<token>/someFolder
+`
+	w.Write([]byte(help))
 }
 
 func (rest *Rest) home(w http.ResponseWriter, r *http.Request) {
