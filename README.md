@@ -4,9 +4,6 @@ http interface for storing files
 ## purpose
 just for the memes
 
-## test header
-fkdjkfjk
-
 ## starting service
 - `docker-compose up --build` to start on `:8080` port
 - `go build && ./dbfs` to start on `:8080` port 
